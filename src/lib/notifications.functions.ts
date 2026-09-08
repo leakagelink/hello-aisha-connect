@@ -22,7 +22,14 @@ export const sendConversationPush = createServerFn({ method: "POST" })
       })
       .parse(raw),
   )
-  .handler(async ({ data }) => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const [{ data: isStaff }, { data: isAdmin }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "listener" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+    ]);
+    if (!isStaff && !isAdmin) throw new Error("Forbidden");
+
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const fcmKey = process.env["FIREBASE_MESSAGING_API_KEY"];
     if (!lovableKey || !fcmKey) {
@@ -84,7 +91,7 @@ export const sendConversationPush = createServerFn({ method: "POST" })
                 data: { path },
                 android: {
                   priority: "HIGH",
-                  notification: { channel_id: ANDROID_CHANNEL_ID, click_action: path },
+                  notification: { channel_id: ANDROID_CHANNEL_ID },
                 },
               },
             }),
@@ -170,7 +177,7 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
                 data: { path: "/home" },
                 android: {
                   priority: "HIGH",
-                  notification: { channel_id: ANDROID_CHANNEL_ID, click_action: "/home" },
+                  notification: { channel_id: ANDROID_CHANNEL_ID },
                 },
               },
             }),
