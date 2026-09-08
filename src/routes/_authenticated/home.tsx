@@ -27,8 +27,10 @@ function HomePage() {
     ["requested", "waiting", "active"].includes(c.status),
   );
 
-  const status = availability.data?.status ?? "not_accepting";
-  const hasListener = Boolean(availability.data);
+  // No listener row configured yet: members can still leave a message that
+  // Aisha will see in the inbox, rather than hitting a dead end.
+  const status = availability.data?.status ?? "away";
+  const hasListener = true;
 
   return (
     <main className="min-h-screen bg-soft-gradient pb-28">
