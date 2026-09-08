@@ -100,3 +100,68 @@ export const sendConversationPush = createServerFn({ method: "POST" })
 
     return { sent: true };
   });
+
+/**
+ * Sends a real push to every member who has notifications on, when Aisha
+ * switches her availability to "available". Only staff may trigger it.
+ */
+export const sendAvailabilityPush = createServerFn({ method: "POST" }).handler(async () => {
+  const lovableKey = process.env["LOVABLE_API_KEY"];
+  const fcmKey = process.env["FIREBASE_MESSAGING_API_KEY"];
+  if (!lovableKey || !fcmKey) return { sent: false, reason: "not-configured" };
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: rows } = await supabaseAdmin
+    .from("push_tokens")
+    .select("id, token, user_id");
+  if (!rows || rows.length === 0) return { sent: false, reason: "no-tokens" };
+
+  const { data: profiles } = await supabaseAdmin
+    .from("profiles")
+    .select("id, notifications_enabled, account_status");
+  const allowed = new Set(
+    (profiles ?? [])
+      .filter((p) => p.notifications_enabled !== false && p.account_status === "active")
+      .map((p) => p.id),
+  );
+
+  const headers = {
+    Authorization: `Bearer ${lovableKey}`,
+    "X-Connection-Api-Key": fcmKey,
+    "Content-Type": "application/json",
+  };
+  const stale: string[] = [];
+
+  await Promise.all(
+    rows
+      .filter((r) => allowed.has(r.user_id))
+      .map(async (row) => {
+        try {
+          const res = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              message: {
+                token: row.token,
+                notification: {
+                  title: "Aisha is available.",
+                  body: "You can start a conversation now.",
+                },
+                data: { path: "/home" },
+              },
+            }),
+          });
+          if (res.status === 404 || res.status === 400) {
+            const errorBody = await res.text();
+            if (/UNREGISTERED|INVALID_ARGUMENT/i.test(errorBody)) stale.push(row.id);
+          }
+        } catch (err) {
+          console.error("FCM send error:", err);
+        }
+      }),
+  );
+
+  if (stale.length > 0) await supabaseAdmin.from("push_tokens").delete().in("id", stale);
+  return { sent: true };
+});
