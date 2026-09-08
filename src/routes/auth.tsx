@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BrandMark } from "@/components/AisArt";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 import { logEvent } from "@/lib/aisha";
 import { authReturnUrl } from "@/lib/site";
@@ -69,19 +68,7 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: authReturnUrl(),
-    });
-    if (result.error) {
-      setBusy(false);
-      toast.error("Google sign-in didn't work. Please try again.");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/home" });
-  };
+
 
   if (sent) {
     return (
@@ -116,21 +103,7 @@ function AuthPage() {
             We only ask for an email. No phone number, no photo, no real name.
           </p>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-6 min-h-13 w-full rounded-full text-base"
-            onClick={google}
-            disabled={busy}
-          >
-            Continue with Google
-          </Button>
-
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
