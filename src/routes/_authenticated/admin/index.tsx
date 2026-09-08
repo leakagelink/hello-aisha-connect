@@ -262,8 +262,8 @@ function AdminHome() {
                     </p>
                     {previews.data?.[c.id] ? (
                       <div className="mt-2 flex items-start justify-between gap-2">
-                        <p className="line-clamp-2 text-sm">{previews.data[c.id].content}</p>
-                        {previews.data[c.id].unread > 0 ? (
+                        <p className="line-clamp-2 text-sm">{previews.data[c.id]!.content}</p>
+                        {previews.data[c.id]!.unread > 0 ? (
                           <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
                             {previews.data[c.id].unread} new
                           </span>
