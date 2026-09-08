@@ -5,7 +5,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { listenForegroundPush } from "@/lib/push";
-import { listenNativePush, autoRegisterNativePush } from "@/lib/native-push";
+import {
+  listenNativePush,
+  autoRegisterNativePush,
+  startNativeTokenSync,
+} from "@/lib/native-push";
 
 /**
  * Live alerts for members: a real toast (and a browser notification when the
@@ -100,9 +104,11 @@ export function LiveAlerts() {
   // If the phone already granted notification permission (e.g. at install),
   // register this device silently so pushes arrive even when the app is closed.
   useEffect(() => {
-    if (!me?.userId || me.isStaff) return;
+    if (!me?.userId) return;
+    const stopSync = startNativeTokenSync(me.userId);
     void autoRegisterNativePush(me.userId);
-  }, [me?.userId, me?.isStaff]);
+    return stopSync;
+  }, [me?.userId]);
 
   // Native (Android app) pushes: foreground delivery and taps on a
   // background/system notification.
