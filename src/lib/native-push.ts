@@ -11,6 +11,19 @@ export type NativePushRegistration = {
   detail?: string;
 };
 
+const LAST_PUSH_ERROR_KEY = "hello-aisha-native-push-error";
+
+function rememberPushError(detail: string | undefined) {
+  if (typeof window === "undefined") return;
+  if (detail) window.localStorage.setItem(LAST_PUSH_ERROR_KEY, detail);
+  else window.localStorage.removeItem(LAST_PUSH_ERROR_KEY);
+}
+
+export function getLastNativePushError(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(LAST_PUSH_ERROR_KEY);
+}
+
 /** True when the app runs inside the native Android/iOS shell. */
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
@@ -53,10 +66,10 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
     }
     if (perm.receive !== "granted") return { status: "denied" };
 
-    const token = await new Promise<string | null>((resolve) => {
+    const registration = await new Promise<{ token: string | null; error?: string }>((resolve) => {
       let settled = false;
       const handles: Array<{ remove: () => Promise<void> }> = [];
-      const finish = (value: string | null) => {
+      const finish = (value: { token: string | null; error?: string }) => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
@@ -64,14 +77,15 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
         resolve(value);
       };
       const timer = setTimeout(() => {
-        finish(null);
+        finish({ token: null, error: "Firebase registration timed out. Rebuild the Android app after running npm run cap:sync." });
       }, 15000);
 
       void Promise.all([
-        PushNotifications.addListener("registration", (t) => finish(t.value)),
+        PushNotifications.addListener("registration", (t) => finish({ token: t.value })),
         PushNotifications.addListener("registrationError", (error) => {
           console.error("Native push registration failed:", error);
-          finish(null);
+          const detail = "error" in error ? String(error.error) : JSON.stringify(error);
+          finish({ token: null, error: detail });
         }),
       ])
         .then(async ([registrationHandle, errorHandle]) => {
@@ -80,26 +94,34 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
         })
         .catch((error) => {
           console.error("Native push registration failed:", error);
-          finish(null);
+          finish({ token: null, error: error instanceof Error ? error.message : String(error) });
         });
     });
 
-    if (!token) return { status: "error", detail: "Firebase did not return a device token." };
+    if (!registration.token) {
+      const detail = registration.error ?? "Firebase did not return a device token.";
+      rememberPushError(detail);
+      return { status: "error", detail };
+    }
 
     const { error } = await supabase.from("push_tokens").upsert(
-      { user_id: userId, token, platform: Capacitor.getPlatform() },
+      { user_id: userId, token: registration.token, platform: Capacitor.getPlatform() },
       { onConflict: "user_id,token" },
     );
     if (error) {
       console.error("Could not save native push token:", error.message);
+      rememberPushError(`Token save failed: ${error.message}`);
       return { status: "error", detail: error.message };
     }
+    rememberPushError(undefined);
     return { status: "registered" };
   } catch (error) {
     console.error("Native push setup failed:", error);
+    const detail = error instanceof Error ? error.message : "Native notification setup failed.";
+    rememberPushError(detail);
     return {
       status: "error",
-      detail: error instanceof Error ? error.message : "Native notification setup failed.",
+      detail,
     };
   }
 }
