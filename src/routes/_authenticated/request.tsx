@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { TOPICS, logEvent } from "@/lib/aisha";
+import { sendStaffPush } from "@/lib/notifications.functions";
 import { useAvailability } from "@/hooks/useAppData";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,11 @@ function RequestPage() {
       });
 
       await logEvent("conversation_requested");
+      try {
+        await sendStaffPush({ data: { conversationId: data.id, type: "request" } });
+      } catch (pushErr) {
+        console.error("Staff push failed:", pushErr);
+      }
       navigate({ to: "/chat/$id", params: { id: data.id }, replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "We couldn't send that request.");

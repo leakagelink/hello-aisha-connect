@@ -270,3 +270,93 @@ export const sendTestPushToAll = createServerFn({ method: "POST" })
     if (stale.length > 0) await supabaseAdmin.from("push_tokens").delete().in("id", stale);
     return { sent, failed, devices: rows.length };
   });
+
+/**
+ * Notifies Aisha (every listener/admin device) when a member sends a message or
+ * opens a new conversation request. Callable by the conversation's own member.
+ */
+export const sendStaffPush = createServerFn({ method: "POST" })
+  .inputValidator((raw) =>
+    z
+      .object({
+        conversationId: z.string().uuid(),
+        type: z.enum(["message", "request"]),
+        content: z.string().optional(),
+      })
+      .parse(raw),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const lovableKey = process.env["LOVABLE_API_KEY"];
+    const fcmKey = process.env["FIREBASE_MESSAGING_API_KEY"];
+    if (!lovableKey || !fcmKey) return { sent: false, reason: "not-configured" };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Only the conversation's own member may trigger this.
+    const { data: conv } = await supabaseAdmin
+      .from("conversations")
+      .select("user_id")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (!conv || conv.user_id !== context.userId) return { sent: false, reason: "forbidden" };
+
+    const { data: staffRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["listener", "admin"]);
+    const staffIds = Array.from(new Set((staffRoles ?? []).map((r) => r.user_id)));
+    if (staffIds.length === 0) return { sent: false, reason: "no-staff" };
+
+    const { data: tokens } = await supabaseAdmin
+      .from("push_tokens")
+      .select("id, token")
+      .in("user_id", staffIds);
+    if (!tokens || tokens.length === 0) return { sent: false, reason: "no-tokens" };
+
+    const isMessage = data.type === "message";
+    const title = isMessage ? "New message from a member" : "New conversation request";
+    const body = isMessage
+      ? (data.content ?? "").slice(0, 120) || "Open the inbox to reply."
+      : "Someone is waiting to talk.";
+    const path = isMessage ? `/admin/chat/${data.conversationId}` : "/admin";
+
+    const headers = {
+      Authorization: `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": fcmKey,
+      "Content-Type": "application/json",
+    };
+
+    const stale: string[] = [];
+    await Promise.all(
+      tokens.map(async (row) => {
+        try {
+          const res = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              message: {
+                token: row.token,
+                notification: { title, body },
+                data: { path },
+                android: {
+                  priority: "HIGH",
+                  notification: { channel_id: ANDROID_CHANNEL_ID },
+                },
+              },
+            }),
+          });
+          if (!res.ok) {
+            const errorBody = await res.text();
+            if (/UNREGISTERED|INVALID_ARGUMENT/i.test(errorBody)) stale.push(row.id);
+            console.error(`Staff push failed [${res.status}]: ${errorBody}`);
+          }
+        } catch (err) {
+          console.error("Staff push error:", err);
+        }
+      }),
+    );
+
+    if (stale.length > 0) await supabaseAdmin.from("push_tokens").delete().in("id", stale);
+    return { sent: true, devices: tokens.length };
+  });

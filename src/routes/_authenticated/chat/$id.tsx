@@ -16,6 +16,7 @@ import { LoadingView, ErrorView } from "@/components/StateViews";
 import { ReportDialog } from "@/components/ReportDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTime, logEvent } from "@/lib/aisha";
+import { sendStaffPush } from "@/lib/notifications.functions";
 import { useProfile } from "@/hooks/useAppData";
 import { cn } from "@/lib/utils";
 
@@ -158,6 +159,11 @@ function ChatPage() {
       setDraft("");
       if (isFirst) await logEvent("first_message_sent");
       await queryClient.invalidateQueries({ queryKey: ["messages", id] });
+      try {
+        await sendStaffPush({ data: { conversationId: id, type: "message", content } });
+      } catch (pushErr) {
+        console.error("Staff push failed:", pushErr);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "That message didn't send.");
     } finally {
