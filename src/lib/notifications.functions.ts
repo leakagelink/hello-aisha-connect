@@ -93,7 +93,12 @@ export const sendConversationPush = createServerFn({ method: "POST" })
                 data: { path },
                 android: {
                   priority: "HIGH",
-                  notification: { channel_id: ANDROID_CHANNEL_ID },
+                  notification: {
+                    channel_id: ANDROID_CHANNEL_ID,
+                    default_sound: true,
+                    default_vibrate_timings: true,
+                    notification_priority: "PRIORITY_HIGH",
+                  },
                 },
               },
             }),
@@ -179,7 +184,12 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
                 data: { path: "/home" },
                 android: {
                   priority: "HIGH",
-                  notification: { channel_id: ANDROID_CHANNEL_ID },
+                  notification: {
+                    channel_id: ANDROID_CHANNEL_ID,
+                    default_sound: true,
+                    default_vibrate_timings: true,
+                    notification_priority: "PRIORITY_HIGH",
+                  },
                 },
               },
             }),
@@ -249,7 +259,12 @@ export const sendTestPushToAll = createServerFn({ method: "POST" })
                 data: { path: "/home" },
                 android: {
                   priority: "HIGH",
-                  notification: { channel_id: ANDROID_CHANNEL_ID },
+                  notification: {
+                    channel_id: ANDROID_CHANNEL_ID,
+                    default_sound: true,
+                    default_vibrate_timings: true,
+                    notification_priority: "PRIORITY_HIGH",
+                  },
                 },
               },
             }),
@@ -344,7 +359,12 @@ export const sendStaffPush = createServerFn({ method: "POST" })
                 data: { path },
                 android: {
                   priority: "HIGH",
-                  notification: { channel_id: ANDROID_CHANNEL_ID },
+                  notification: {
+                    channel_id: ANDROID_CHANNEL_ID,
+                    default_sound: true,
+                    default_vibrate_timings: true,
+                    notification_priority: "PRIORITY_HIGH",
+                  },
                 },
               },
             }),

@@ -54,6 +54,29 @@ async function onEvent(
 }
 
 /**
+ * Creates the high-importance Android channel used for every push we send.
+ * Creating it again with the same id is a no-op, so this is safe to call often.
+ */
+async function ensureAndroidChannel(
+  plugin: Awaited<ReturnType<typeof pushPlugin>>["plugin"],
+): Promise<void> {
+  if (Capacitor.getPlatform() !== "android") return;
+  try {
+    await plugin.createChannel({
+      id: ANDROID_CHANNEL_ID,
+      name: "Aisha messages",
+      description: "Notifications when Aisha replies or becomes available",
+      importance: 5,
+      visibility: 1,
+      vibration: true,
+      lights: true,
+    });
+  } catch (error) {
+    console.error("Could not create the Android notification channel:", error);
+  }
+}
+
+/**
  * Asks for native notification permission, registers with FCM and stores the
  * device registration token so the server can target this device.
  */
@@ -68,16 +91,7 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
   try {
     const { plugin: PushNotifications } = await pushPlugin();
 
-    if (Capacitor.getPlatform() === "android") {
-      await PushNotifications.createChannel({
-        id: ANDROID_CHANNEL_ID,
-        name: "Aisha messages",
-        description: "Notifications when Aisha replies or becomes available",
-        importance: 5,
-        visibility: 1,
-        vibration: true,
-      });
-    }
+    await ensureAndroidChannel(PushNotifications);
 
     let perm = await PushNotifications.checkPermissions();
     if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") {
@@ -147,8 +161,15 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
 
 const PENDING_TOKEN_KEY = "hello-aisha-pending-push-token";
 
+/** Last token successfully stored in this session, to avoid duplicate writes. */
+let lastSavedToken: { userId: string; token: string } | null = null;
+
 /** Saves a device token for this account; remembers it if saving fails. */
 export async function saveNativeToken(userId: string, token: string): Promise<boolean> {
+  if (!token) return false;
+  if (lastSavedToken && lastSavedToken.userId === userId && lastSavedToken.token === token) {
+    return true;
+  }
   const { error } = await supabase.from("push_tokens").upsert(
     { user_id: userId, token, platform: Capacitor.getPlatform() },
     { onConflict: "user_id,token" },
@@ -201,8 +222,25 @@ export function startNativeTokenSync(userId: string): () => void {
         typeof window !== "undefined" ? window.localStorage.getItem(PENDING_TOKEN_KEY) : null;
       if (pending) await saveNativeToken(userId, pending);
 
-      const perm = await PushNotifications.checkPermissions();
-      if (perm.receive === "granted") await PushNotifications.register();
+      // The channel must exist before any notification is delivered.
+      await ensureAndroidChannel(PushNotifications);
+
+      const registerIfAllowed = async () => {
+        const state = await PushNotifications.checkPermissions();
+        if (state.receive === "granted") await PushNotifications.register();
+      };
+      await registerIfAllowed();
+
+      // Re-check when the app comes back to the foreground: this picks up a
+      // permission granted from system settings and any FCM token rotation
+      // (for example right after an app update).
+      const { App } = await import("@capacitor/app");
+      const appHandle = await Promise.resolve(
+        App.addListener("appStateChange", ({ isActive }) => {
+          if (isActive) void registerIfAllowed();
+        }),
+      );
+      cleanups.push(() => void appHandle.remove());
     } catch (error) {
       console.error("Native token sync failed:", error);
     }
