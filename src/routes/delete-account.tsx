@@ -50,7 +50,7 @@ function DeleteAccountPage() {
         userEmail = data.user.email ?? email;
       }
       const { error } = await supabase.rpc("request_account_deletion", {
-        _reason: reason || null,
+        ...(reason ? { _reason: reason } : {}),
       });
       if (error) throw error;
       await logEvent("account_deletion_requested");

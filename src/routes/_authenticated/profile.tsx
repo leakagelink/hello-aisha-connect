@@ -142,7 +142,7 @@ function ProfilePage() {
 
   const requestDeletion = async () => {
     if (!me?.userId) return;
-    const { error } = await supabase.rpc("request_account_deletion", { _reason: null });
+    const { error } = await supabase.rpc("request_account_deletion", {});
     if (error) {
       toast.error("We couldn't submit your request.");
       return;

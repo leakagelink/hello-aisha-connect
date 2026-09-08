@@ -26,7 +26,7 @@ function RequestPage() {
       // Conversations are created through a secure server routine that always
       // assigns Aisha and sets the initial status. Clients cannot set these.
       const { data: conversationId, error } = await supabase.rpc("create_conversation", {
-        _topic: topic,
+        ...(topic ? { _topic: topic } : {}),
       });
       if (error) throw error;
       if (!conversationId) throw new Error("We couldn't send that request.");
