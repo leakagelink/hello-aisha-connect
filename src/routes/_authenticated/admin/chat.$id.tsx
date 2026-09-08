@@ -268,15 +268,22 @@ function AdminChat() {
               })}
             </ul>
             <div ref={endRef} />
-            <div className="sticky bottom-0 mt-4 flex items-end gap-2 bg-transparent pb-4">
+            <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
               <Textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
                 placeholder="Write as Aisha…"
                 aria-label="Reply"
                 rows={1}
                 className="max-h-32 min-h-12 flex-1 resize-none rounded-2xl bg-card"
               />
+
               <Button
                 size="icon"
                 aria-label="Send"
