@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Section } from "@/components/PageShell";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const Route = createFileRoute("/guidelines")({
   head: () => ({
@@ -56,6 +57,16 @@ function GuidelinesPage() {
           reviewed by the Hello Aisha team.
         </p>
       </Section>
+      <Section heading="Contact us">
+        <p>
+          You can write to us at{" "}
+          <a className="font-semibold underline" href={`mailto:${SUPPORT_EMAIL}`}>
+            {SUPPORT_EMAIL}
+          </a>
+          . This inbox is not monitored for emergencies.
+        </p>
+      </Section>
+
     </PageShell>
   );
 }

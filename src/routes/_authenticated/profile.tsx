@@ -23,6 +23,8 @@ import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { logEvent } from "@/lib/aisha";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
 import { enablePush, disablePush, isPushConfigured, currentPermission, type PushStatus } from "@/lib/push";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -169,7 +171,15 @@ function ProfilePage() {
             Report a Problem
             <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
           </button>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="flex min-h-13 w-full items-center justify-between px-1 text-left text-sm font-medium"
+          >
+            Contact us ({SUPPORT_EMAIL})
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+          </a>
         </Group>
+
 
         <Group title="Notifications">
           <div className="flex min-h-13 items-center justify-between gap-4 px-1">
