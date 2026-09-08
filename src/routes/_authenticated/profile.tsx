@@ -184,20 +184,28 @@ function ProfilePage() {
           <p className="px-1 text-xs text-muted-foreground">
             We only notify you when Aisha replies or accepts your conversation request.
           </p>
-          {permission !== "unsupported" && (
+          {pushStatus !== "unsupported" && (
             <div className="flex min-h-13 items-center justify-between gap-4 px-1">
               <span className="text-sm">
-                {permission === "granted"
+                {pushStatus === "registered"
                   ? "Alerts on this device are on."
-                  : permission === "denied"
+                  : pushStatus === "denied"
                     ? "Alerts are blocked in your browser settings."
-                    : "Allow alerts on this device"}
+                    : pushStatus === "not-configured"
+                      ? "Device alerts aren't set up yet."
+                      : pushStatus === "open-in-new-tab"
+                        ? "Open the app in its own tab to enable alerts."
+                        : "Allow alerts on this device"}
               </span>
-              {permission === "default" && (
-                <Button size="sm" variant="secondary" onClick={() => void requestPermission()}>
+              {pushStatus === "registered" ? (
+                <Button size="sm" variant="outline" onClick={() => void disableDevicePush()}>
+                  Turn off
+                </Button>
+              ) : pushStatus === "idle" || pushStatus === "open-in-new-tab" ? (
+                <Button size="sm" variant="secondary" onClick={() => void enableDevicePush()}>
                   Allow
                 </Button>
-              )}
+              ) : null}
             </div>
           )}
         </Group>
