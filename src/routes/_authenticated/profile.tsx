@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
@@ -22,8 +22,8 @@ import { ReportDialog } from "@/components/ReportDialog";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
-import { useNotificationPermission } from "@/hooks/useNotifications";
 import { logEvent } from "@/lib/aisha";
+import { enablePush, disablePush, isPushConfigured, currentPermission, type PushStatus } from "@/lib/push";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -35,7 +35,53 @@ function ProfilePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [reportOpen, setReportOpen] = useState(false);
-  const { permission, request: requestPermission } = useNotificationPermission();
+  const [pushStatus, setPushStatus] = useState<PushStatus | "idle">("idle");
+
+  const tokenCount = useQuery({
+    queryKey: ["my-push-tokens", me?.userId ?? ""],
+    enabled: !!me?.userId,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("push_tokens")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", me!.userId);
+      return count ?? 0;
+    },
+  });
+
+  // Derive the device push state from config, browser permission and saved token.
+  useEffect(() => {
+    if (!isPushConfigured()) return setPushStatus("not-configured");
+    const perm = currentPermission();
+    if (perm === "unsupported") return setPushStatus("unsupported");
+    if (perm === "denied") return setPushStatus("denied");
+    if ((tokenCount.data ?? 0) > 0) return setPushStatus("registered");
+    if (perm === "default") return setPushStatus("open-in-new-tab");
+    return setPushStatus("idle");
+  }, [tokenCount.data]);
+
+  const enableDevicePush = async () => {
+    if (!me?.userId) return;
+    const result = await enablePush(me.userId);
+    setPushStatus(result);
+    if (result === "registered") {
+      toast.success("Alerts on this device are on.");
+      tokenCount.refetch();
+    } else if (result === "open-in-new-tab") {
+      toast("Open the app in its own tab to enable alerts.");
+    } else if (result === "denied") {
+      toast.error("Alerts are blocked in your browser settings.");
+    }
+  };
+
+  const disableDevicePush = async () => {
+    if (!me?.userId) return;
+    await disablePush(me.userId);
+    const perm = currentPermission();
+    setPushStatus(perm === "denied" ? "denied" : perm === "unsupported" ? "unsupported" : "idle");
+    toast("Device alerts turned off.");
+    tokenCount.refetch();
+  };
 
   const toggleNotifications = async (value: boolean) => {
     if (!me?.userId) return;
@@ -139,20 +185,28 @@ function ProfilePage() {
           <p className="px-1 text-xs text-muted-foreground">
             We only notify you when Aisha replies or accepts your conversation request.
           </p>
-          {permission !== "unsupported" && (
+          {pushStatus !== "unsupported" && (
             <div className="flex min-h-13 items-center justify-between gap-4 px-1">
               <span className="text-sm">
-                {permission === "granted"
+                {pushStatus === "registered"
                   ? "Alerts on this device are on."
-                  : permission === "denied"
+                  : pushStatus === "denied"
                     ? "Alerts are blocked in your browser settings."
-                    : "Allow alerts on this device"}
+                    : pushStatus === "not-configured"
+                      ? "Device alerts aren't set up yet."
+                      : pushStatus === "open-in-new-tab"
+                        ? "Open the app in its own tab to enable alerts."
+                        : "Allow alerts on this device"}
               </span>
-              {permission === "default" && (
-                <Button size="sm" variant="secondary" onClick={() => void requestPermission()}>
+              {pushStatus === "registered" ? (
+                <Button size="sm" variant="outline" onClick={() => void disableDevicePush()}>
+                  Turn off
+                </Button>
+              ) : pushStatus === "idle" || pushStatus === "open-in-new-tab" ? (
+                <Button size="sm" variant="secondary" onClick={() => void enableDevicePush()}>
                   Allow
                 </Button>
-              )}
+              ) : null}
             </div>
           )}
         </Group>
