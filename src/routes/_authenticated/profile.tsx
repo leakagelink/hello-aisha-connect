@@ -21,6 +21,7 @@ import {
 import { ReportDialog } from "@/components/ReportDialog";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteMyAccountNow } from "@/lib/account.functions";
 import { useProfile } from "@/hooks/useAppData";
 import { logEvent } from "@/lib/aisha";
 import { SUPPORT_EMAIL } from "@/lib/site";

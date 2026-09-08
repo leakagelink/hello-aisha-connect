@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteMyAccountNow } from "@/lib/account.functions";
 import { useSession } from "@/hooks/useSession";
 import { logEvent } from "@/lib/aisha";
 
@@ -47,15 +48,17 @@ function DeleteAccountPage() {
         userId = data.user.id;
         userEmail = data.user.email ?? email;
       }
-      const { error } = await supabase
-        .from("account_deletion_requests")
-        .insert({ user_id: userId, email: userEmail, reason: reason || null });
+      const { error } = await supabase.rpc("request_account_deletion", {
+        _reason: reason || null,
+      });
       if (error) throw error;
-      await supabase
-        .from("profiles")
-        .update({ account_status: "deletion_requested" })
-        .eq("id", userId);
       await logEvent("account_deletion_requested");
+      try {
+        await deleteMyAccountNow();
+        await supabase.auth.signOut();
+      } catch {
+        // Falls back to the queued deletion request handled by the team.
+      }
       setDone(true);
     } catch (err) {
       toast.error(
