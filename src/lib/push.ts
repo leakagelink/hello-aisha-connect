@@ -158,7 +158,7 @@ export function currentPermission(): "default" | "granted" | "denied" | "unsuppo
  * Returns a cleanup function.
  */
 export function listenForegroundPush(
-  handler: (payload: { title?: string; body?: string; path?: string }) => void,
+  handler: (payload: { title?: string | undefined; body?: string | undefined; path?: string | undefined }) => void,
 ): () => void {
   if (typeof window === "undefined" || !isPushActive()) return () => {};
   let unsubscribe: (() => void) | undefined;
