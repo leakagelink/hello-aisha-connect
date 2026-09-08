@@ -208,8 +208,25 @@ export function startNativeTokenSync(userId: string): () => void {
         typeof window !== "undefined" ? window.localStorage.getItem(PENDING_TOKEN_KEY) : null;
       if (pending) await saveNativeToken(userId, pending);
 
-      const perm = await PushNotifications.checkPermissions();
-      if (perm.receive === "granted") await PushNotifications.register();
+      // The channel must exist before any notification is delivered.
+      await ensureAndroidChannel(PushNotifications);
+
+      const registerIfAllowed = async () => {
+        const state = await PushNotifications.checkPermissions();
+        if (state.receive === "granted") await PushNotifications.register();
+      };
+      await registerIfAllowed();
+
+      // Re-check when the app comes back to the foreground: this picks up a
+      // permission granted from system settings and any FCM token rotation
+      // (for example right after an app update).
+      const { App } = await import("@capacitor/app");
+      const appHandle = await Promise.resolve(
+        App.addListener("appStateChange", ({ isActive }) => {
+          if (isActive) void registerIfAllowed();
+        }),
+      );
+      cleanups.push(() => void appHandle.remove());
     } catch (error) {
       console.error("Native token sync failed:", error);
     }
