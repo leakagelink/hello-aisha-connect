@@ -54,6 +54,9 @@ function ProfilePage() {
 
   // Derive the device push state from config, browser permission and saved token.
   useEffect(() => {
+    if (isNativeApp()) {
+      return setPushStatus((tokenCount.data ?? 0) > 0 ? "registered" : "idle");
+    }
     if (!isPushConfigured()) return setPushStatus("not-configured");
     const perm = currentPermission();
     if (perm === "unsupported") return setPushStatus("unsupported");
@@ -65,6 +68,20 @@ function ProfilePage() {
 
   const enableDevicePush = async () => {
     if (!me?.userId) return;
+    if (isNativeApp()) {
+      const native = await enableNativePush(me.userId);
+      if (native === "registered") {
+        setPushStatus("registered");
+        toast.success("Alerts on this device are on.");
+        tokenCount.refetch();
+      } else if (native === "denied") {
+        setPushStatus("denied");
+        toast.error("Alerts are blocked in your phone settings.");
+      } else {
+        toast.error("We couldn't turn on alerts on this device.");
+      }
+      return;
+    }
     const result = await enablePush(me.userId);
     setPushStatus(result);
     if (result === "registered") {
@@ -79,6 +96,13 @@ function ProfilePage() {
 
   const disableDevicePush = async () => {
     if (!me?.userId) return;
+    if (isNativeApp()) {
+      await disableNativePush(me.userId);
+      setPushStatus("idle");
+      toast("Device alerts turned off.");
+      tokenCount.refetch();
+      return;
+    }
     await disablePush(me.userId);
     const perm = currentPermission();
     setPushStatus(perm === "denied" ? "denied" : perm === "unsupported" ? "unsupported" : "idle");
