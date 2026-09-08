@@ -79,6 +79,10 @@ export const sendConversationPush = createServerFn({ method: "POST" })
                 token: row.token,
                 notification: { title, body },
                 data: { path },
+                android: {
+                  priority: "HIGH",
+                  notification: { channel_id: ANDROID_CHANNEL_ID, click_action: path },
+                },
               },
             }),
           });
