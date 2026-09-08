@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { SITE_URL } from "@/lib/site";
 
 function NotFoundComponent() {
   return (
@@ -91,10 +92,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Friendly conversation and peer support with a real person. For adults 18+.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:site_name", content: "Hello Aisha" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#4c1d95" },
     ],
     links: [
+      { rel: "canonical", href: SITE_URL },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
