@@ -37,7 +37,7 @@ npm install
 ## 3) Add the Android platform (first time only)
 
 ```powershell
-npx cap add android
+npm run cap:add
 ```
 
 This creates the `android\` folder. You only run this once; afterwards it stays
@@ -48,8 +48,12 @@ in the project.
 Run this every time you change `capacitor.config.ts` or the `www\` folder:
 
 ```powershell
-npx cap sync android
+npm run cap:sync
 ```
+
+This command also copies `google-services.json`, confirms that it matches
+`online.helloaisha.app`, and enables the Google Services Gradle plugin required
+for Firebase device-token registration.
 
 ## 5) Open in Android Studio
 
@@ -114,6 +118,6 @@ keystore for every future update).
   launch. Offline shows a short "Connecting…" fallback page.
 - Because the WebView origin is `https://helloaisha.online`, email sign-in and
   service-worker push work exactly like the website.
-- Notifications: the website's FCM web push runs inside the WebView. For true
-  native Android push notifications and background delivery, a separate native
-  FCM integration (with `google-services.json`) is needed later.
+- Notifications use native FCM and the `hello_aisha_channel` Android channel.
+  After changing notification code, run `npm run cap:sync`, rebuild the APK,
+  uninstall the old app, and install the new APK.

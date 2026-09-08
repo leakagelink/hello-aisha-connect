@@ -5,6 +5,7 @@
 - [ ] Publish the project so helloaisha.online serves the app
 
 ## Done
+- [x] Grant secure device-token access and wire the Android Google Services plugin during sync
 - [x] Connect Firebase Cloud Messaging in the new workspace
 - [x] Add native Android FCM registration, verified token storage, and automatic Firebase config sync
 - [x] Use helloaisha.online as the canonical domain (canonical + og:url tags, sign-in return address, robots sitemap)
