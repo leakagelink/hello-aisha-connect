@@ -4,6 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
 
+/** Android notification channel created on the native side. */
+const ANDROID_CHANNEL_ID = "hello_aisha_channel";
+
 /**
  * Sends a real Firebase Cloud Messaging push notification to every registered
  * device for the conversation's member. Triggered when Aisha (staff) replies or
