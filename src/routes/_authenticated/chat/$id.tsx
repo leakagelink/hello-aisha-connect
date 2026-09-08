@@ -154,6 +154,18 @@ function ChatPage() {
           toast("Your messages have been received. Please wait for Aisha to respond.");
           return;
         }
+        if (error.message.includes("CONVERSATION_BLOCKED")) {
+          toast("You blocked this conversation, so no new messages can be sent.");
+          return;
+        }
+        if (error.message.includes("ACCOUNT_MUTED")) {
+          toast("Messaging is paused on your account right now.");
+          return;
+        }
+        if (error.message.includes("ACCOUNT_RESTRICTED")) {
+          toast("Your account can't send messages at the moment.");
+          return;
+        }
         throw error;
       }
       setDraft("");
