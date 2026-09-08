@@ -156,9 +156,10 @@ function ProfilePage() {
       await supabase.auth.signOut();
       navigate({ to: "/auth", replace: true });
     } catch {
-      toast.success("Your deletion request has been received and will be completed shortly.");
+      toast.error("We couldn't complete your account deletion right now. Please try again.");
     }
   };
+
 
   const signOut = async () => {
     await queryClient.cancelQueries();
