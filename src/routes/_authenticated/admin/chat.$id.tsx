@@ -257,7 +257,7 @@ function AdminChat() {
                     >
                       {m.is_system ? (
                         <p className="text-[10px] font-bold uppercase text-primary">
-                          Hello Aisha Team · Welcome message
+                          Hello Aisha · Welcome message
                         </p>
                       ) : null}
                       <p className="whitespace-pre-wrap break-words">{m.content}</p>
