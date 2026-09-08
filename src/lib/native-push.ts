@@ -126,6 +126,71 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
   }
 }
 
+const PENDING_TOKEN_KEY = "hello-aisha-pending-push-token";
+
+/** Saves a device token for this account; remembers it if saving fails. */
+export async function saveNativeToken(userId: string, token: string): Promise<boolean> {
+  const { error } = await supabase.from("push_tokens").upsert(
+    { user_id: userId, token, platform: Capacitor.getPlatform() },
+    { onConflict: "user_id,token" },
+  );
+  if (error) {
+    console.error("Could not save native push token:", error.message);
+    rememberPushError(`Token save failed: ${error.message}`);
+    if (typeof window !== "undefined") window.localStorage.setItem(PENDING_TOKEN_KEY, token);
+    return false;
+  }
+  rememberPushError(undefined);
+  if (typeof window !== "undefined") window.localStorage.removeItem(PENDING_TOKEN_KEY);
+  return true;
+}
+
+/**
+ * Keeps this device's token in the database for the signed-in account.
+ * Attaches a permanent listener (so a token arriving at any time is saved),
+ * retries any token that failed to save earlier, and re-registers with FCM
+ * when permission is already granted. Never shows a prompt.
+ */
+export function startNativeTokenSync(userId: string): () => void {
+  if (!isNativeApp()) return () => {};
+  let cancelled = false;
+  const cleanups: Array<() => void> = [];
+
+  void (async () => {
+    try {
+      const PushNotifications = await pushPlugin();
+      if (cancelled) return;
+
+      const handle = await PushNotifications.addListener("registration", (t) => {
+        void saveNativeToken(userId, t.value);
+      });
+      cleanups.push(() => void handle.remove());
+
+      const errorHandle = await PushNotifications.addListener("registrationError", (err) => {
+        const detail = "error" in err ? String(err.error) : JSON.stringify(err);
+        console.error("Native push registration failed:", detail);
+        rememberPushError(detail);
+      });
+      cleanups.push(() => void errorHandle.remove());
+
+      // Retry a token that arrived before the account was ready.
+      const pending =
+        typeof window !== "undefined" ? window.localStorage.getItem(PENDING_TOKEN_KEY) : null;
+      if (pending) await saveNativeToken(userId, pending);
+
+      const perm = await PushNotifications.checkPermissions();
+      if (perm.receive === "granted") await PushNotifications.register();
+    } catch (error) {
+      console.error("Native token sync failed:", error);
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+    cleanups.forEach((fn) => fn());
+  };
+}
+
 /**
  * Silently registers this device when the phone has already granted
  * notification permission (e.g. the user allowed it at install time).
