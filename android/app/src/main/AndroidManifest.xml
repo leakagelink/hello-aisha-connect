@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -37,8 +38,8 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Ye metadata background notification ke liye zaroori hai -->
-        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="hello_aisha_channel" />
+        <!-- Use the fresh 'aisha_alerts' channel for background notifications -->
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="aisha_alerts" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@mipmap/ic_launcher" />
 
     </application>

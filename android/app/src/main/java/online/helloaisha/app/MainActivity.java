@@ -1,9 +1,11 @@
 package online.helloaisha.app;
 
 import android.Manifest;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
@@ -12,28 +14,34 @@ import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     private static final int NOTIFICATION_PERMISSION_CODE = 123;
+    // New Channel ID to force priority refresh
+    private static final String CHANNEL_ID = "aisha_alerts";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        createNotificationChannel();
+        createNotificationChannels();
         checkAndRequestPermission();
     }
 
-    private void createNotificationChannel() {
+    private void createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager == null) return;
+
             NotificationChannel channel = new NotificationChannel(
-                "hello_aisha_channel",
+                CHANNEL_ID,
                 "Aisha Replies",
                 NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Notifications for Aisha's messages");
-            channel.setShowBadge(true);
+            channel.setDescription("High priority alerts for Aisha's messages");
+            channel.enableLights(true);
+            channel.setLightColor(Color.MAGENTA);
             channel.enableVibration(true);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
+            channel.setShowBadge(true);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            
+            manager.createNotificationChannel(channel);
         }
     }
 
