@@ -8,7 +8,14 @@ const vapidKey = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY"];
 const apiKey = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY"];
 const projectId = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_PROJECT_ID"];
 
-const firebaseConfig: Record<string, string> = {
+interface FirebaseConfig {
+  apiKey: string;
+  projectId: string;
+  appId: string;
+  messagingSenderId: string;
+}
+
+const firebaseConfig: FirebaseConfig = {
   apiKey: apiKey ?? "",
   projectId: projectId ?? "",
   appId: appId ?? "",
@@ -26,11 +33,11 @@ export type PushStatus =
 
 export function isPushConfigured(): boolean {
   return Boolean(
-    firebaseConfig.apiKey &&
-      firebaseConfig.projectId &&
-      firebaseConfig.appId &&
+    firebaseConfig["apiKey"] &&
+      firebaseConfig["projectId"] &&
+      firebaseConfig["appId"] &&
       vapidKey &&
-      firebaseConfig.messagingSenderId,
+      firebaseConfig["messagingSenderId"],
   );
 }
 
