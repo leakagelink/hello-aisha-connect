@@ -40,3 +40,8 @@ android/captures/
 android/app/release/
 *.keystore
 !debug.keystore
+
+# Environment files
+.env
+.env.*
+!.env.example
