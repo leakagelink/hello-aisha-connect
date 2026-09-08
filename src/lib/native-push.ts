@@ -69,7 +69,6 @@ async function ensureAndroidChannel(
       importance: 5,
       visibility: 1,
       vibration: true,
-      sound: "default",
       lights: true,
     });
   } catch (error) {
