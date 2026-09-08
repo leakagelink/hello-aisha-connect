@@ -42,6 +42,7 @@ function DeleteAccountPage() {
     try {
       let userId = session?.user.id;
       let userEmail = session?.user.email ?? email;
+      void userEmail;
       if (!userId) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
