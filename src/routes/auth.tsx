@@ -103,10 +103,7 @@ function AuthPage() {
             We only ask for an email. No phone number, no photo, no real name.
           </p>
 
-
-
-
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
