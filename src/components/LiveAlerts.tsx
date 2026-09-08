@@ -96,6 +96,24 @@ export function LiveAlerts() {
     };
   }, [me?.userId, me?.isStaff, queryClient, navigate]);
 
+  // Native (Android app) pushes: foreground delivery and taps on a
+  // background/system notification.
+  useEffect(() => {
+    if (!me?.userId || me.isStaff) return;
+    return listenNativePush({
+      onForeground: (n) => {
+        toast(n.title ?? "Hello Aisha", {
+          description: n.body,
+          action: n.path
+            ? { label: "Open", onClick: () => navigate({ to: n.path as never }) }
+            : undefined,
+        });
+        queryClient.invalidateQueries({ queryKey: ["chats"] });
+      },
+      onOpen: (path) => navigate({ to: path as never }),
+    });
+  }, [me?.userId, me?.isStaff, navigate, queryClient]);
+
   // Push messages that arrive while the app is open in the foreground.
   useEffect(() => {
     if (!me?.userId || me.isStaff) return;
