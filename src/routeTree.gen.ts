@@ -20,6 +20,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
 import { Route as AuthenticatedCheckinRouteImport } from './routes/_authenticated/checkin'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedRequestRouteImport } from './routes/_authenticated/request'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedChatIdRouteImport } from './routes/_authenticated/chat/$id'
@@ -78,6 +79,11 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRequestRoute = AuthenticatedRequestRouteImport.update({
   id: '/request',
   path: '/request',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/chats': typeof AuthenticatedChatsRoute
   '/checkin': typeof AuthenticatedCheckinRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/chats': typeof AuthenticatedChatsRoute
   '/checkin': typeof AuthenticatedCheckinRoute
   '/home': typeof AuthenticatedHomeRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/_authenticated/chats': typeof AuthenticatedChatsRoute
   '/_authenticated/checkin': typeof AuthenticatedCheckinRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/request': typeof AuthenticatedRequestRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/chat/$id': typeof AuthenticatedChatIdRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/chats'
     | '/checkin'
     | '/home'
+    | '/profile'
     | '/request'
     | '/setup'
     | '/chat/$id'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/chats'
     | '/checkin'
     | '/home'
+    | '/profile'
     | '/request'
     | '/setup'
     | '/chat/$id'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chats'
     | '/_authenticated/checkin'
     | '/_authenticated/home'
+    | '/_authenticated/profile'
     | '/_authenticated/request'
     | '/_authenticated/setup'
     | '/_authenticated/chat/$id'
@@ -280,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/request': {
       id: '/_authenticated/request'
       path: '/request'
@@ -308,6 +327,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatsRoute: typeof AuthenticatedChatsRoute
   AuthenticatedCheckinRoute: typeof AuthenticatedCheckinRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRequestRoute: typeof AuthenticatedRequestRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedChatIdRoute: typeof AuthenticatedChatIdRoute
@@ -317,6 +337,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatsRoute: AuthenticatedChatsRoute,
   AuthenticatedCheckinRoute: AuthenticatedCheckinRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRequestRoute: AuthenticatedRequestRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedChatIdRoute: AuthenticatedChatIdRoute,
