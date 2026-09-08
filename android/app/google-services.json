@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1054196339726",
+    "project_id": "hello-aisha",
+    "storage_bucket": "hello-aisha.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054196339726:android:de3e5ec09b1b8b16b5185f",
+        "android_client_info": {
+          "package_name": "online.helloaisha.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMPW5O_6l7N7Xvx9Iqq2EZZEJpAucD_-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

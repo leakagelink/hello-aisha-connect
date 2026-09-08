@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Hello Aisha</string>
+    <string name="title_activity_main">Hello Aisha</string>
+    <string name="package_name">online.helloaisha.app</string>
+    <string name="custom_url_scheme">online.helloaisha.app</string>
+</resources>
