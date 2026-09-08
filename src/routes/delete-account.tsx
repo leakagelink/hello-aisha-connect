@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PageShell, Section } from "@/components/PageShell";
+import { SUPPORT_EMAIL } from "@/lib/site";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,6 +148,16 @@ function DeleteAccountPage() {
           </Button>
         </form>
       )}
+      <Section heading="Questions about deletion">
+        <p>
+          You can write to us at{" "}
+          <a className="font-semibold underline" href={`mailto:${SUPPORT_EMAIL}`}>
+            {SUPPORT_EMAIL}
+          </a>
+          . This inbox is not monitored for emergencies.
+        </p>
+      </Section>
+
     </PageShell>
   );
 }
