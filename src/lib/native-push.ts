@@ -180,17 +180,21 @@ export function startNativeTokenSync(userId: string): () => void {
       const { plugin: PushNotifications } = await pushPlugin();
       if (cancelled) return;
 
-      const handle = await PushNotifications.addListener("registration", (t) => {
-        void saveNativeToken(userId, t.value);
+      const handle = await onEvent(PushNotifications, "registration", (t: never) => {
+        void saveNativeToken(userId, (t as { value: string }).value);
       });
       cleanups.push(() => void handle.remove());
 
-      const errorHandle = await PushNotifications.addListener("registrationError", (err) => {
-        const detail = "error" in err ? String(err.error) : JSON.stringify(err);
+      const errorHandle = await onEvent(PushNotifications, "registrationError", (err: never) => {
+        const detail =
+          err && typeof err === "object" && "error" in err
+            ? String((err as { error: unknown }).error)
+            : JSON.stringify(err);
         console.error("Native push registration failed:", detail);
         rememberPushError(detail);
       });
       cleanups.push(() => void errorHandle.remove());
+
 
       // Retry a token that arrived before the account was ready.
       const pending =
