@@ -61,6 +61,30 @@ function AdminHome() {
     },
   });
 
+  const previews = useQuery({
+    queryKey: ["admin-previews"],
+    enabled: !!me?.isStaff,
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("conversation_id, content, created_at, is_read, sender_id")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const map: Record<string, { content: string; created_at: string; unread: number }> = {};
+      for (const m of data ?? []) {
+        const entry = (map[m.conversation_id] ??= {
+          content: m.content,
+          created_at: m.created_at,
+          unread: 0,
+        });
+        if (!m.is_read && m.sender_id !== me?.userId) entry.unread += 1;
+      }
+      return map;
+    },
+  });
+
   const counts = useQuery({
     queryKey: ["admin-counts"],
     enabled: !!me?.isStaff,
