@@ -29,9 +29,28 @@ export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
 }
 
+/**
+ * Loads the native push plugin. The plugin object is wrapped so it is never the
+ * resolved value of a promise: Capacitor proxies treat any property lookup
+ * (including `then`) as a native call, which throws
+ * "PushNotifications.then() is not implemented".
+ */
 async function pushPlugin() {
-  const { PushNotifications } = await import("@capacitor/push-notifications");
-  return PushNotifications;
+  const mod = await import("@capacitor/push-notifications");
+  return { plugin: mod.PushNotifications };
+}
+
+type ListenerHandle = { remove: () => Promise<void> };
+
+/** addListener may return a handle or a promise of one depending on version. */
+async function onEvent(
+  plugin: Awaited<ReturnType<typeof pushPlugin>>["plugin"],
+  event: string,
+  cb: (payload: never) => void,
+): Promise<ListenerHandle> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handle = await Promise.resolve((plugin as any).addListener(event, cb));
+  return handle as ListenerHandle;
 }
 
 /**
@@ -47,7 +66,7 @@ export async function enableNativePush(userId: string): Promise<NativePushStatus
 export async function registerNativePush(userId: string): Promise<NativePushRegistration> {
   if (!isNativeApp()) return { status: "unsupported" };
   try {
-    const PushNotifications = await pushPlugin();
+    const { plugin: PushNotifications } = await pushPlugin();
 
     if (Capacitor.getPlatform() === "android") {
       await PushNotifications.createChannel({
@@ -152,7 +171,7 @@ export function startNativeTokenSync(userId: string): () => void {
 
   void (async () => {
     try {
-      const PushNotifications = await pushPlugin();
+      const { plugin: PushNotifications } = await pushPlugin();
       if (cancelled) return;
 
       const handle = await PushNotifications.addListener("registration", (t) => {
@@ -193,7 +212,7 @@ export function startNativeTokenSync(userId: string): () => void {
 export async function autoRegisterNativePush(userId: string): Promise<void> {
   if (!isNativeApp()) return;
   try {
-    const PushNotifications = await pushPlugin();
+    const { plugin: PushNotifications } = await pushPlugin();
     const perm = await PushNotifications.checkPermissions();
     if (perm.receive !== "granted") return;
     const result = await registerNativePush(userId);
@@ -209,7 +228,7 @@ export async function autoRegisterNativePush(userId: string): Promise<void> {
 export async function disableNativePush(userId: string): Promise<void> {
   if (!isNativeApp()) return;
   try {
-    const PushNotifications = await pushPlugin();
+    const { plugin: PushNotifications } = await pushPlugin();
     await PushNotifications.removeAllListeners();
     await supabase
       .from("push_tokens")
@@ -240,7 +259,7 @@ export function listenNativePush(handlers: {
 
   void (async () => {
     try {
-      const PushNotifications = await pushPlugin();
+      const { plugin: PushNotifications } = await pushPlugin();
       if (cancelled) return;
 
       const received = await PushNotifications.addListener(
