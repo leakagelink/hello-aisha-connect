@@ -2,11 +2,12 @@ import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getMessaging, getToken, deleteToken, isSupported, type Messaging } from "firebase/messaging";
 import { supabase } from "@/integrations/supabase/client";
 import { FIREBASE_WEB_CONFIG, FIREBASE_VAPID_KEY } from "@/lib/firebase-config";
+import { getFirebaseWebApiKey } from "@/lib/firebase-web.functions";
 
 // Prefer connector-provided env vars (set when "Include web push" is enabled),
 // then fall back to the public constants in firebase-config.ts.
 const env = import.meta.env as Record<string, string | undefined>;
-const apiKey =
+let apiKey =
   env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY"] ||
   FIREBASE_WEB_CONFIG.apiKey;
 const projectId =
@@ -31,6 +32,20 @@ const firebaseConfig: FirebaseConfig = {
   appId,
   messagingSenderId: appId?.split(":")[1] ?? FIREBASE_WEB_CONFIG.messagingSenderId,
 };
+
+/** Loads the Web API key from the server when it is not bundled. */
+async function ensureApiKey(): Promise<void> {
+  if (firebaseConfig.apiKey) return;
+  try {
+    const res = await getFirebaseWebApiKey();
+    if (res?.apiKey) {
+      apiKey = res.apiKey;
+      firebaseConfig.apiKey = res.apiKey;
+    }
+  } catch {
+    /* leave unconfigured */
+  }
+}
 
 const PUSH_ACTIVE_FLAG = "hello-aisha-push-active";
 
@@ -61,11 +76,13 @@ function getMessagingInstance(): Messaging | null {
   return messaging;
 }
 
+
 /**
  * Ask the browser for notification permission and register this device with
  * Firebase Cloud Messaging. Must be called from a user gesture (tap/click).
  */
 export async function enablePush(userId: string): Promise<PushStatus> {
+  await ensureApiKey();
   if (!isPushConfigured()) return "not-configured";
   if (!("Notification" in window) || !(await isSupported())) return "unsupported";
   // The Lovable preview runs the app in a cross-origin iframe, where browsers
