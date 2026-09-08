@@ -17,6 +17,8 @@ import { Route as GuidelinesRouteImport } from './routes/guidelines'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
+import { Route as AuthenticatedCheckinRouteImport } from './routes/_authenticated/checkin'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedRequestRouteImport } from './routes/_authenticated/request'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
@@ -61,6 +63,16 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedChatsRoute = AuthenticatedChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCheckinRoute = AuthenticatedCheckinRouteImport.update({
+  id: '/checkin',
+  path: '/checkin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -90,6 +102,8 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
+  '/chats': typeof AuthenticatedChatsRoute
+  '/checkin': typeof AuthenticatedCheckinRoute
   '/home': typeof AuthenticatedHomeRoute
   '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -103,6 +117,8 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
+  '/chats': typeof AuthenticatedChatsRoute
+  '/checkin': typeof AuthenticatedCheckinRoute
   '/home': typeof AuthenticatedHomeRoute
   '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -118,6 +134,8 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/chats': typeof AuthenticatedChatsRoute
+  '/_authenticated/checkin': typeof AuthenticatedCheckinRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/request': typeof AuthenticatedRequestRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
@@ -133,6 +151,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/safety'
     | '/terms'
+    | '/chats'
+    | '/checkin'
     | '/home'
     | '/request'
     | '/setup'
@@ -146,6 +166,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/safety'
     | '/terms'
+    | '/chats'
+    | '/checkin'
     | '/home'
     | '/request'
     | '/setup'
@@ -160,6 +182,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/safety'
     | '/terms'
+    | '/_authenticated/chats'
+    | '/_authenticated/checkin'
     | '/_authenticated/home'
     | '/_authenticated/request'
     | '/_authenticated/setup'
@@ -235,6 +259,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/chats': {
+      id: '/_authenticated/chats'
+      path: '/chats'
+      fullPath: '/chats'
+      preLoaderRoute: typeof AuthenticatedChatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/checkin': {
+      id: '/_authenticated/checkin'
+      path: '/checkin'
+      fullPath: '/checkin'
+      preLoaderRoute: typeof AuthenticatedCheckinRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/home': {
       id: '/_authenticated/home'
       path: '/home'
@@ -267,6 +305,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedChatsRoute: typeof AuthenticatedChatsRoute
+  AuthenticatedCheckinRoute: typeof AuthenticatedCheckinRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedRequestRoute: typeof AuthenticatedRequestRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
@@ -274,6 +314,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedChatsRoute: AuthenticatedChatsRoute,
+  AuthenticatedCheckinRoute: AuthenticatedCheckinRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedRequestRoute: AuthenticatedRequestRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
