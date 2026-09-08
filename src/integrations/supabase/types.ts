@@ -428,12 +428,19 @@ export type Database = {
         Args: { _conversation_id: string }
         Returns: boolean
       }
+      create_conversation: { Args: { _topic?: string }; Returns: string }
+      guard_bypassed: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      is_staff: { Args: { _uid: string }; Returns: boolean }
+      request_account_deletion: {
+        Args: { _reason?: string }
+        Returns: undefined
       }
     }
     Enums: {
