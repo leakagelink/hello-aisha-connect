@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
@@ -37,31 +37,50 @@ function ProfilePage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [pushStatus, setPushStatus] = useState<PushStatus | "idle">("idle");
 
+  const tokenCount = useQuery({
+    queryKey: ["my-push-tokens", me?.userId ?? ""],
+    enabled: !!me?.userId,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("push_tokens")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", me!.userId);
+      return count ?? 0;
+    },
+  });
+
+  // Derive the device push state from config, browser permission and saved token.
   useEffect(() => {
     if (!isPushConfigured()) return setPushStatus("not-configured");
     const perm = currentPermission();
     if (perm === "unsupported") return setPushStatus("unsupported");
     if (perm === "denied") return setPushStatus("denied");
-    // Defer "registered" detection to the query below.
-  }, []);
+    if ((tokenCount.data ?? 0) > 0) return setPushStatus("registered");
+    if (perm === "default") return setPushStatus("open-in-new-tab");
+    return setPushStatus("idle");
+  }, [tokenCount.data]);
 
-  // Reflect the stored token so the toggle shows the right state across reloads.
-  const { data: tokenCount } = useProfile().data?.userId
-    ? (() => {
-        return useQuery({
-          queryKey: ["my-push-tokens"],
-          enabled: !!me?.userId,
-          queryFn: async () => {
-            const { count } = await supabase
-              .from("push_tokens")
-              .select("id", { count: "exact", head: true })
-              .eq("user_id", me!.userId);
-            return count ?? 0;
-          },
-        });
-      })()
-    : { data: 0 };
-  void tokenCount;
+  const enableDevicePush = async () => {
+    if (!me?.userId) return;
+    const result = await enablePush(me.userId);
+    setPushStatus(result);
+    if (result === "registered") {
+      toast.success("Alerts on this device are on.");
+      tokenCount.refetch();
+    } else if (result === "open-in-new-tab") {
+      toast("Open the app in its own tab to enable alerts.");
+    } else if (result === "denied") {
+      toast.error("Alerts are blocked in your browser settings.");
+    }
+  };
+
+  const disableDevicePush = async () => {
+    if (!me?.userId) return;
+    await disablePush(me.userId);
+    setPushStatus(currentPermission() === "granted" ? "idle" : currentPermission());
+    toast("Device alerts turned off.");
+    tokenCount.refetch();
+  };
 
   const toggleNotifications = async (value: boolean) => {
     if (!me?.userId) return;
