@@ -152,3 +152,36 @@ export function currentPermission(): "default" | "granted" | "denied" | "unsuppo
   if (typeof window === "undefined" || !("Notification" in window)) return "unsupported";
   return Notification.permission as "default" | "granted" | "denied";
 }
+
+/**
+ * Listens for FCM messages that arrive while the app is open (foreground).
+ * Returns a cleanup function.
+ */
+export function listenForegroundPush(
+  handler: (payload: { title?: string; body?: string; path?: string }) => void,
+): () => void {
+  if (typeof window === "undefined" || !isPushActive()) return () => {};
+  let unsubscribe: (() => void) | undefined;
+  let cancelled = false;
+  void (async () => {
+    try {
+      if (!(await isSupported())) return;
+      const instance = getMessagingInstance();
+      if (!instance || cancelled) return;
+      const { onMessage } = await import("firebase/messaging");
+      unsubscribe = onMessage(instance, (payload) => {
+        handler({
+          title: payload.notification?.title,
+          body: payload.notification?.body,
+          path: (payload.data as Record<string, string> | undefined)?.["path"],
+        });
+      });
+    } catch {
+      /* messaging unavailable */
+    }
+  })();
+  return () => {
+    cancelled = true;
+    unsubscribe?.();
+  };
+}
