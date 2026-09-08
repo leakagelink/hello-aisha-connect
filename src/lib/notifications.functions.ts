@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
 
@@ -105,7 +106,18 @@ export const sendConversationPush = createServerFn({ method: "POST" })
  * Sends a real push to every member who has notifications on, when Aisha
  * switches her availability to "available". Only staff may trigger it.
  */
-export const sendAvailabilityPush = createServerFn({ method: "POST" }).handler(async () => {
+export const sendAvailabilityPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+  const { data: isStaff } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "listener",
+  });
+  const { data: isAdmin } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
+  if (!isStaff && !isAdmin) throw new Error("Forbidden");
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const fcmKey = process.env["FIREBASE_MESSAGING_API_KEY"];
   if (!lovableKey || !fcmKey) return { sent: false, reason: "not-configured" };
