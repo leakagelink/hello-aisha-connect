@@ -30,10 +30,8 @@ export const deleteMyAccountNow = createServerFn({ method: "POST" })
     await supabaseAdmin.from("analytics_events").delete().eq("user_id", userId);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
     await supabaseAdmin.from("profiles").delete().eq("id", userId);
-    await supabaseAdmin
-      .from("account_deletion_requests")
-      .update({ status: "completed", processed_at: new Date().toISOString() })
-      .eq("user_id", userId);
+    await supabaseAdmin.from("account_deletion_requests").delete().eq("user_id", userId);
+    await supabaseAdmin.from("reports").delete().eq("reporter_id", userId);
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) throw new Error(error.message);
