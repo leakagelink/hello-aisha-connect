@@ -67,7 +67,10 @@ export async function enablePush(userId: string): Promise<PushStatus> {
   );
   const instance = getMessagingInstance();
   if (!instance) return "not-configured";
-  const token = await getToken(instance, { vapidKey, serviceWorkerRegistration: registration });
+  const token = await getToken(instance, {
+    vapidKey: vapidKey!,
+    serviceWorkerRegistration: registration,
+  });
   if (!token) return "denied";
 
   await supabase
