@@ -67,6 +67,23 @@ export async function enableNativePush(userId: string): Promise<NativePushStatus
   }
 }
 
+/**
+ * Silently registers this device when the phone has already granted
+ * notification permission (e.g. the user allowed it at install time).
+ * Never shows a prompt.
+ */
+export async function autoRegisterNativePush(userId: string): Promise<void> {
+  if (!isNativeApp()) return;
+  try {
+    const PushNotifications = await pushPlugin();
+    const perm = await PushNotifications.checkPermissions();
+    if (perm.receive !== "granted") return;
+    await enableNativePush(userId);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Removes this device's native token and stops receiving pushes. */
 export async function disableNativePush(userId: string): Promise<void> {
   if (!isNativeApp()) return;
