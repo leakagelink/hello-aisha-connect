@@ -25,6 +25,7 @@ import { Route as AuthenticatedRequestRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedChatIdRouteImport } from './routes/_authenticated/chat/$id'
 import { Route as AuthenticatedAdminChatIdRouteImport } from './routes/_authenticated/admin/chat.$id'
 
@@ -108,6 +109,12 @@ const AuthenticatedAdminReportsRoute =
     path: '/admin/reports',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/admin/settings',
+    path: '/admin/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedChatIdRoute = AuthenticatedChatIdRouteImport.update({
   id: '/chat/$id',
   path: '/chat/$id',
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/chat/$id': typeof AuthenticatedAdminChatIdRoute
@@ -154,6 +162,7 @@ export interface FileRoutesByTo {
   '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/chat/$id': typeof AuthenticatedAdminChatIdRoute
@@ -175,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated/request': typeof AuthenticatedRequestRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/chat/$id': typeof AuthenticatedChatIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/chat/$id': typeof AuthenticatedAdminChatIdRoute
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/request'
     | '/setup'
     | '/admin/reports'
+    | '/admin/settings'
     | '/chat/$id'
     | '/admin/'
     | '/admin/chat/$id'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/request'
     | '/setup'
     | '/admin/reports'
+    | '/admin/settings'
     | '/chat/$id'
     | '/admin'
     | '/admin/chat/$id'
@@ -235,6 +247,7 @@ export interface FileRouteTypes {
     | '/_authenticated/request'
     | '/_authenticated/setup'
     | '/_authenticated/admin/reports'
+    | '/_authenticated/admin/settings'
     | '/_authenticated/chat/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/chat/$id'
@@ -365,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat/$id': {
       id: '/_authenticated/chat/$id'
       path: '/chat/$id'
@@ -390,6 +410,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRequestRoute: typeof AuthenticatedRequestRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedChatIdRoute: typeof AuthenticatedChatIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminChatIdRoute: typeof AuthenticatedAdminChatIdRoute
@@ -403,6 +424,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRequestRoute: AuthenticatedRequestRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedChatIdRoute: AuthenticatedChatIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminChatIdRoute: AuthenticatedAdminChatIdRoute,
