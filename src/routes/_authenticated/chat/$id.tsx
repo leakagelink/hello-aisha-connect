@@ -263,7 +263,7 @@ function ChatPage() {
                     <li key={m.id} className="mx-auto max-w-[90%]">
                       <div className="rounded-2xl border border-border bg-card p-4">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-primary">
-                          Hello Aisha Team · Welcome message
+                          Hello Aisha · Welcome message
                         </p>
                         <p className="mt-1.5 text-sm leading-relaxed">{m.content}</p>
                       </div>
