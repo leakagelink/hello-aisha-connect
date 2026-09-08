@@ -3,7 +3,8 @@ import type { CapacitorConfig } from "@capacitor/cli";
 /**
  * Hello Aisha — Production Android Configuration.
  *
- * Optimized for TanStack Start / Nitro static output.
+ * webDir is set to ".output/public" to match the TanStack Start / Nitro
+ * production build output.
  */
 const config: CapacitorConfig = {
   appId: "online.helloaisha.app",
@@ -17,19 +18,7 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
-      launchAutoHide: true,
       backgroundColor: "#4C1D95",
-      androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP",
-      showSpinner: false,
-    },
-    StatusBar: {
-      style: "LIGHT",
-      backgroundColor: "#4C1D95",
-      overlaysWebView: false,
-    },
-    App: {
-      killOnPause: false,
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],

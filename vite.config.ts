@@ -1,16 +1,16 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  // Disable SSR to produce a static SPA that Capacitor can bundle
   tanstackStart: {
+    // Force client-only mode for Capacitor bundling to get index.html
     ssr: false,
   },
-  // Ensure Nitro generates a static entry point for mobile
   nitro: {
+    // Generate a static SPA entry point
     preset: 'static',
     prerender: {
       routes: ['/'],
-      crawlLinks: false,
+      crawlLinks: true,
       failOnError: false
     }
   }
