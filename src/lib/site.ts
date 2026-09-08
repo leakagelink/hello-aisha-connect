@@ -20,3 +20,6 @@ export function authReturnUrl(path = "/"): string {
       : SITE_URL;
   return path === "/" ? base : `${base}${path}`;
 }
+
+/** The address people can write to for support, privacy, and account questions. */
+export const SUPPORT_EMAIL = "miss@helloaisha.online";
