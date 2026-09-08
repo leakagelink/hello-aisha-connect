@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import { AdminShell } from "@/components/AdminShell";
 import { LoadingView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
+import { sendAvailabilityPush } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: AdminSettings,
@@ -23,6 +25,7 @@ function AdminSettings() {
   const me = useProfile().data;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const notifyAvailable = useServerFn(sendAvailabilityPush);
 
   useEffect(() => {
     if (me && !me.isStaff) navigate({ to: "/home", replace: true });
@@ -53,6 +56,10 @@ function AdminSettings() {
       return;
     }
     toast.success("Availability updated.");
+    if (status === "available") {
+      // Real push to members who opted in, only when Aisha is genuinely available.
+      notifyAvailable({ data: undefined }).catch((err) => console.error("Push send failed:", err));
+    }
     queryClient.invalidateQueries({ queryKey: ["admin-availability", me.userId] });
     queryClient.invalidateQueries({ queryKey: ["availability"] });
   };
