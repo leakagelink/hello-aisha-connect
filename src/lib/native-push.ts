@@ -104,16 +104,10 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
       return { status: "error", detail };
     }
 
-    const { error } = await supabase.from("push_tokens").upsert(
-      { user_id: userId, token: registration.token, platform: Capacitor.getPlatform() },
-      { onConflict: "user_id,token" },
-    );
-    if (error) {
-      console.error("Could not save native push token:", error.message);
-      rememberPushError(`Token save failed: ${error.message}`);
-      return { status: "error", detail: error.message };
+    const saved = await saveNativeToken(userId, registration.token);
+    if (!saved) {
+      return { status: "error", detail: getLastNativePushError() ?? "Token save failed." };
     }
-    rememberPushError(undefined);
     return { status: "registered" };
   } catch (error) {
     console.error("Native push setup failed:", error);
