@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import { AdminShell } from "@/components/AdminShell";
 import { LoadingView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
-import { sendAvailabilityPush } from "@/lib/notifications.functions";
+import { sendAvailabilityPush, sendTestPushToAll } from "@/lib/notifications.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: AdminSettings,
@@ -26,6 +26,24 @@ function AdminSettings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const notifyAvailable = useServerFn(sendAvailabilityPush);
+  const sendTest = useServerFn(sendTestPushToAll);
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const runTestPush = async () => {
+    setSendingTest(true);
+    try {
+      const result = await sendTest({ data: undefined });
+      if (!result.devices) {
+        toast.error("No device is registered yet. Open the app on a phone and allow notifications.");
+      } else {
+        toast.success(`Test sent to ${result.sent} of ${result.devices} device(s).`);
+      }
+    } catch {
+      toast.error("Couldn't send the test notification.");
+    } finally {
+      setSendingTest(false);
+    }
+  };
 
   useEffect(() => {
     if (me && !me.isStaff) navigate({ to: "/home", replace: true });
@@ -112,6 +130,21 @@ function AdminSettings() {
             </Button>
           </>
         )}
+      </section>
+
+      <section className="card-soft mt-4 p-4">
+        <h2 className="text-sm font-bold">Test notifications</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Sends a test alert to every phone that has notifications turned on.
+        </p>
+        <Button
+          variant="outline"
+          className="mt-3 min-h-12 w-full rounded-full"
+          onClick={runTestPush}
+          disabled={sendingTest}
+        >
+          {sendingTest ? "Sending…" : "Send test notification to all"}
+        </Button>
       </section>
 
       <section className="card-soft mt-4 p-4">

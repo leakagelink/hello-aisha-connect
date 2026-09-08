@@ -195,3 +195,78 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
   if (stale.length > 0) await supabaseAdmin.from("push_tokens").delete().in("id", stale);
   return { sent: true };
 });
+
+/**
+ * Sends a test push to every registered device (staff only). Used to verify
+ * that phones actually receive notifications outside the app.
+ */
+export const sendTestPushToAll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    const { data: isStaff } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "listener",
+    });
+    if (!isAdmin && !isStaff) throw new Error("Forbidden");
+
+    const lovableKey = process.env["LOVABLE_API_KEY"];
+    const fcmKey = process.env["FIREBASE_MESSAGING_API_KEY"];
+    if (!lovableKey || !fcmKey) return { sent: 0, failed: 0, devices: 0, reason: "not-configured" };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin.from("push_tokens").select("id, token, user_id");
+    if (!rows || rows.length === 0) return { sent: 0, failed: 0, devices: 0, reason: "no-tokens" };
+
+    const headers = {
+      Authorization: `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": fcmKey,
+      "Content-Type": "application/json",
+    };
+
+    let sent = 0;
+    let failed = 0;
+    const stale: string[] = [];
+
+    await Promise.all(
+      rows.map(async (row) => {
+        try {
+          const res = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              message: {
+                token: row.token,
+                notification: {
+                  title: "Hello Aisha",
+                  body: "Test notification — notifications are working on this device.",
+                },
+                data: { path: "/home" },
+                android: {
+                  priority: "HIGH",
+                  notification: { channel_id: ANDROID_CHANNEL_ID },
+                },
+              },
+            }),
+          });
+          if (res.ok) {
+            sent += 1;
+          } else {
+            failed += 1;
+            const errorBody = await res.text();
+            if (/UNREGISTERED|INVALID_ARGUMENT/i.test(errorBody)) stale.push(row.id);
+            console.error(`Test push failed [${res.status}]: ${errorBody}`);
+          }
+        } catch (err) {
+          failed += 1;
+          console.error("Test push error:", err);
+        }
+      }),
+    );
+
+    if (stale.length > 0) await supabaseAdmin.from("push_tokens").delete().in("id", stale);
+    return { sent, failed, devices: rows.length };
+  });
