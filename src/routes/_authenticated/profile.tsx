@@ -26,6 +26,7 @@ import { logEvent } from "@/lib/aisha";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 import { enablePush, disablePush, isPushConfigured, currentPermission, type PushStatus } from "@/lib/push";
+import { isNativeApp, enableNativePush, disableNativePush } from "@/lib/native-push";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
