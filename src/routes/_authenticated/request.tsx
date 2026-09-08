@@ -24,35 +24,22 @@ function RequestPage() {
     try {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) throw new Error("You are signed out.");
-      const listenerId = availability.data?.listener_id ?? null;
 
-      const { data, error } = await supabase
-        .from("conversations")
-        .insert({
-          user_id: auth.user.id,
-          listener_id: listenerId,
-          topic,
-          status: "requested",
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
-      await supabase.from("messages").insert({
-        conversation_id: data.id,
-        sender_id: auth.user.id,
-        is_system: true,
-        content:
-          "Thanks for reaching out. Aisha will reply when she is available. Wait times may vary depending on availability.",
+      // Conversations are created through a secure server routine that always
+      // assigns Aisha and sets the initial status. Clients cannot set these.
+      const { data: conversationId, error } = await supabase.rpc("create_conversation", {
+        _topic: topic,
       });
+      if (error) throw error;
+      if (!conversationId) throw new Error("We couldn't send that request.");
 
       await logEvent("conversation_requested");
       try {
-        await sendStaffPush({ data: { conversationId: data.id, type: "request" } });
+        await sendStaffPush({ data: { conversationId, type: "request" } });
       } catch (pushErr) {
         console.error("Staff push failed:", pushErr);
       }
-      navigate({ to: "/chat/$id", params: { id: data.id }, replace: true });
+      navigate({ to: "/chat/$id", params: { id: conversationId }, replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "We couldn't send that request.");
     } finally {
