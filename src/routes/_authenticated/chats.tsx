@@ -61,7 +61,7 @@ function ChatsPage() {
               description="When you're ready, you can reach out and Aisha will reply when she's available."
               action={
                 <Button asChild className="min-h-12 rounded-full">
-                  <Link to="/home">Go to home</Link>
+                  <Link to="/request">Message Aisha</Link>
                 </Button>
               }
             />
