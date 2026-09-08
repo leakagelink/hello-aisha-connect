@@ -22,6 +22,7 @@ import { ReportDialog } from "@/components/ReportDialog";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
+import { useNotificationPermission } from "@/hooks/useNotifications";
 import { logEvent } from "@/lib/aisha";
 
 export const Route = createFileRoute("/_authenticated/profile")({
