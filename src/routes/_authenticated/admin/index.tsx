@@ -147,9 +147,12 @@ function AdminInbox() {
     }
     if (action === "accept") {
       await logEvent("conversation_accepted");
-      sendPush({ data: { conversationId: conversation.id, type: "accepted" } }).catch((err) =>
-        console.error("Push send failed:", err),
-      );
+      const pushResult = await sendPush({
+        data: { conversationId: conversation.id, type: "accepted" },
+      });
+      if (!pushResult.sent) {
+        console.warn("Conversation accepted but push was not sent:", pushResult.reason);
+      }
     }
     if (action === "close") await logEvent("conversation_closed");
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
@@ -178,9 +181,12 @@ function AdminInbox() {
       setDraft("");
       setReplyFor(null);
       toast.success("Reply sent.");
-      sendPush({ data: { conversationId: conversation.id, type: "reply", content } }).catch((err) =>
-        console.error("Push send failed:", err),
-      );
+      const pushResult = await sendPush({
+        data: { conversationId: conversation.id, type: "reply", content },
+      });
+      if (!pushResult.sent) {
+        console.warn("Reply saved but push was not sent:", pushResult.reason);
+      }
       queryClient.invalidateQueries({ queryKey: ["admin-previews"] });
       queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
     } catch (err) {

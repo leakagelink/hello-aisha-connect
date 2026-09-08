@@ -132,9 +132,12 @@ function AdminChat() {
     setDraft("");
     await logEvent("first_human_reply_received");
     // Send a real push so the member is alerted even if the app is closed.
-    sendPush({ data: { conversationId: id, type: "reply", content } }).catch((err) =>
-      console.error("Push send failed:", err),
-    );
+    const pushResult = await sendPush({
+      data: { conversationId: id, type: "reply", content },
+    });
+    if (!pushResult.sent) {
+      console.warn("Reply saved but push was not sent:", pushResult.reason);
+    }
     queryClient.invalidateQueries({ queryKey: ["admin-messages", id] });
     queryClient.invalidateQueries({ queryKey: ["admin-conversation", id] });
   };

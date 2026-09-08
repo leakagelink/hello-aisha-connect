@@ -67,19 +67,21 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
         finish(null);
       }, 15000);
 
-      void PushNotifications.addListener("registration", (t) => finish(t.value)).then((handle) => {
-        handles.push(handle);
-      });
-      void PushNotifications.addListener("registrationError", (error) => {
-        console.error("Native push registration failed:", error);
-        finish(null);
-      }).then((handle) => {
-        handles.push(handle);
-      });
-      void PushNotifications.register().catch((error) => {
-        console.error("Native push registration failed:", error);
-        finish(null);
-      });
+      void Promise.all([
+        PushNotifications.addListener("registration", (t) => finish(t.value)),
+        PushNotifications.addListener("registrationError", (error) => {
+          console.error("Native push registration failed:", error);
+          finish(null);
+        }),
+      ])
+        .then(async ([registrationHandle, errorHandle]) => {
+          handles.push(registrationHandle, errorHandle);
+          await PushNotifications.register();
+        })
+        .catch((error) => {
+          console.error("Native push registration failed:", error);
+          finish(null);
+        });
     });
 
     if (!token) return { status: "error", detail: "Firebase did not return a device token." };
@@ -113,9 +115,12 @@ export async function autoRegisterNativePush(userId: string): Promise<void> {
     const PushNotifications = await pushPlugin();
     const perm = await PushNotifications.checkPermissions();
     if (perm.receive !== "granted") return;
-    await enableNativePush(userId);
-  } catch {
-    /* ignore */
+    const result = await registerNativePush(userId);
+    if (result.status === "error") {
+      console.error("Automatic native push registration failed:", result.detail);
+    }
+  } catch (error) {
+    console.error("Automatic native push registration failed:", error);
   }
 }
 
