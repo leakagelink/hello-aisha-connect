@@ -34,6 +34,7 @@ function ProfilePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [reportOpen, setReportOpen] = useState(false);
+  const { permission, request: requestPermission } = useNotificationPermission();
 
   const toggleNotifications = async (value: boolean) => {
     if (!me?.userId) return;
