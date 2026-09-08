@@ -1,79 +1,61 @@
 package online.helloaisha.app;
 
-import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
-import com.google.firebase.messaging.FirebaseMessaging;
 
+/**
+ * Hello Aisha main activity.
+ *
+ * The only native responsibility here is creating the notification channel used
+ * by Firebase Cloud Messaging ("hello_aisha_channel") before any notification
+ * can be delivered. Runtime notification permission and FCM registration are
+ * handled by the Capacitor PushNotifications plugin from the web layer, so the
+ * granted state and the stored device token always stay in sync.
+ */
 public class MainActivity extends BridgeActivity {
-    private static final int NOTIFICATION_PERMISSION_CODE = 123;
-    private static final String TAG = "AishaDebug";
+
+    private static final String CHANNEL_ID = "hello_aisha_channel";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
-        checkAndRequestPermission();
-
-        // 3 second delay for quick testing - Minimize app to see it
-        new Handler().postDelayed(() -> sendTestNotification(), 3000);
-
-        FirebaseMessaging.getInstance().getToken()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    String token = task.getResult();
-                    Log.d(TAG, "FCM_TOKEN_READY: " + token);
-                }
-            });
     }
 
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                "hello_aisha_channel",
-                "Aisha Replies",
-                NotificationManager.IMPORTANCE_HIGH
-            );
-            channel.setDescription("Notifications for Aisha's messages");
-            channel.setShowBadge(true);
-            channel.enableVibration(true);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
         }
-    }
-
-    private void checkAndRequestPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
-            }
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager == null) {
+            return;
         }
-    }
 
-    private void sendTestNotification() {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "hello_aisha_channel")
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("Aisha Connection Check")
-                .setContentText("Aapka device reply notifications ke liye taiyaar hai!")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true);
+        NotificationChannel channel = new NotificationChannel(
+            CHANNEL_ID,
+            "Aisha messages",
+            NotificationManager.IMPORTANCE_HIGH
+        );
+        channel.setDescription("Notifications when Aisha replies or becomes available");
+        channel.setShowBadge(true);
+        channel.enableVibration(true);
+        channel.setVibrationPattern(new long[] { 0, 300, 200, 300 });
+        channel.enableLights(true);
+        channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PRIVATE);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            notificationManager.notify(303, builder.build());
-            Log.d(TAG, "Test Notification Sent Successfully");
-        }
+        Uri sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        AudioAttributes attributes = new AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .build();
+        channel.setSound(sound, attributes);
+
+        manager.createNotificationChannel(channel);
     }
 }
