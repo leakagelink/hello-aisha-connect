@@ -16,6 +16,7 @@ import { LoadingView, ErrorView } from "@/components/StateViews";
 import { ReportDialog } from "@/components/ReportDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTime, logEvent } from "@/lib/aisha";
+import { sendStaffPush } from "@/lib/notifications.functions";
 import { useProfile } from "@/hooks/useAppData";
 import { cn } from "@/lib/utils";
 
