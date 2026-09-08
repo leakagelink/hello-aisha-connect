@@ -69,19 +69,7 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: authReturnUrl(),
-    });
-    if (result.error) {
-      setBusy(false);
-      toast.error("Google sign-in didn't work. Please try again.");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/home" });
-  };
+
 
   if (sent) {
     return (
