@@ -141,19 +141,22 @@ function ProfilePage() {
 
   const requestDeletion = async () => {
     if (!me?.userId) return;
-    const { error } = await supabase
-      .from("account_deletion_requests")
-      .insert({ user_id: me.userId, email: me.email });
+    const { error } = await supabase.rpc("request_account_deletion", { _reason: null });
     if (error) {
       toast.error("We couldn't submit your request.");
       return;
     }
-    await supabase
-      .from("profiles")
-      .update({ account_status: "deletion_requested" })
-      .eq("id", me.userId);
     await logEvent("account_deletion_requested");
-    toast.success("Your account deletion request has been received.");
+    try {
+      await deleteMyAccountNow();
+      toast.success("Your account and data have been permanently deleted.");
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      await supabase.auth.signOut();
+      navigate({ to: "/auth", replace: true });
+    } catch {
+      toast.success("Your deletion request has been received and will be completed shortly.");
+    }
   };
 
   const signOut = async () => {
