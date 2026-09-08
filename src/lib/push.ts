@@ -82,6 +82,7 @@ function getMessagingInstance(): Messaging | null {
  * Firebase Cloud Messaging. Must be called from a user gesture (tap/click).
  */
 export async function enablePush(userId: string): Promise<PushStatus> {
+  await ensureApiKey();
   if (!isPushConfigured()) return "not-configured";
   if (!("Notification" in window) || !(await isSupported())) return "unsupported";
   // The Lovable preview runs the app in a cross-origin iframe, where browsers
