@@ -97,6 +97,13 @@ export function LiveAlerts() {
     };
   }, [me?.userId, me?.isStaff, queryClient, navigate]);
 
+  // If the phone already granted notification permission (e.g. at install),
+  // register this device silently so pushes arrive even when the app is closed.
+  useEffect(() => {
+    if (!me?.userId || me.isStaff) return;
+    void autoRegisterNativePush(me.userId);
+  }, [me?.userId, me?.isStaff]);
+
   // Native (Android app) pushes: foreground delivery and taps on a
   // background/system notification.
   useEffect(() => {
