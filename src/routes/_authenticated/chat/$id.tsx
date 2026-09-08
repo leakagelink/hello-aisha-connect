@@ -102,8 +102,9 @@ function ChatPage() {
     if (!me?.userId) return;
     const channel = supabase.channel(`typing-${id}`, { config: { broadcast: { self: false } } });
     channel
-      .on("broadcast", { event: "typing" }, (payload) => {
-        if ((payload.payload as { userId?: string })?.userId === me.userId) return;
+      .on("broadcast", { event: "typing" }, (message) => {
+        const body = message["payload"] as { userId?: string } | undefined;
+        if (body?.userId === me.userId) return;
         setOtherTyping(true);
         if (typingTimeout.current) clearTimeout(typingTimeout.current);
         typingTimeout.current = setTimeout(() => setOtherTyping(false), 3000);
