@@ -76,7 +76,7 @@ function AdminSettings() {
   if (!me.isStaff) return null;
 
   return (
-    <AdminShell active="settings" title="Panel settings" subtitle={me.username ?? "Listener"}>
+    <AdminShell active="settings" title="Panel settings" subtitle={me.profile?.username ?? "Listener"}>
       <section className="card-soft p-4">
         <h2 className="text-sm font-bold">My availability</h2>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -109,7 +109,7 @@ function AdminSettings() {
 
       <section className="card-soft mt-4 p-4">
         <h2 className="text-sm font-bold">Account</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Signed in as {me.username ?? "Aisha"}</p>
+        <p className="mt-2 text-sm text-muted-foreground">Signed in as {me.profile?.username ?? "Aisha"}</p>
         <Button
           variant="outline"
           className="mt-3 min-h-12 w-full rounded-full"
