@@ -23,6 +23,8 @@ import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { logEvent } from "@/lib/aisha";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
 import { enablePush, disablePush, isPushConfigured, currentPermission, type PushStatus } from "@/lib/push";
 
 export const Route = createFileRoute("/_authenticated/profile")({
