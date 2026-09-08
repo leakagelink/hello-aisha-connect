@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { TOPICS, logEvent } from "@/lib/aisha";
+import { sendStaffPush } from "@/lib/notifications.functions";
 import { useAvailability } from "@/hooks/useAppData";
 import { cn } from "@/lib/utils";
 
