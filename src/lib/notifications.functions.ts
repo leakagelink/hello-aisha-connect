@@ -168,6 +168,10 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
                   body: "You can start a conversation now.",
                 },
                 data: { path: "/home" },
+                android: {
+                  priority: "HIGH",
+                  notification: { channel_id: ANDROID_CHANNEL_ID, click_action: "/home" },
+                },
               },
             }),
           });
