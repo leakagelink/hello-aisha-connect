@@ -147,8 +147,15 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
 
 const PENDING_TOKEN_KEY = "hello-aisha-pending-push-token";
 
+/** Last token successfully stored in this session, to avoid duplicate writes. */
+let lastSavedToken: { userId: string; token: string } | null = null;
+
 /** Saves a device token for this account; remembers it if saving fails. */
 export async function saveNativeToken(userId: string, token: string): Promise<boolean> {
+  if (!token) return false;
+  if (lastSavedToken && lastSavedToken.userId === userId && lastSavedToken.token === token) {
+    return true;
+  }
   const { error } = await supabase.from("push_tokens").upsert(
     { user_id: userId, token, platform: Capacitor.getPlatform() },
     { onConflict: "user_id,token" },
