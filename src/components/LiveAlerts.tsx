@@ -5,7 +5,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { listenForegroundPush } from "@/lib/push";
-import { listenNativePush, autoRegisterNativePush } from "@/lib/native-push";
+import {
+  listenNativePush,
+  autoRegisterNativePush,
+  startNativeTokenSync,
+} from "@/lib/native-push";
 
 /**
  * Live alerts for members: a real toast (and a browser notification when the
