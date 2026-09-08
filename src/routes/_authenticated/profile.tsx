@@ -77,7 +77,8 @@ function ProfilePage() {
   const disableDevicePush = async () => {
     if (!me?.userId) return;
     await disablePush(me.userId);
-    setPushStatus(currentPermission() === "granted" ? "idle" : currentPermission());
+    const perm = currentPermission();
+    setPushStatus(perm === "denied" ? "denied" : perm === "unsupported" ? "unsupported" : "idle");
     toast("Device alerts turned off.");
     tokenCount.refetch();
   };

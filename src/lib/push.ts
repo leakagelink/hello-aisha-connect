@@ -2,15 +2,16 @@ import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getMessaging, getToken, deleteToken, isSupported, type Messaging } from "firebase/messaging";
 import { supabase } from "@/integrations/supabase/client";
 
-const appId = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_APP_ID as string | undefined;
-const vapidKey = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY as string | undefined;
-const apiKey = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY as string | undefined;
-const projectId = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_PROJECT_ID as string | undefined;
+const env = import.meta.env as Record<string, string | undefined>;
+const appId = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_APP_ID"];
+const vapidKey = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY"];
+const apiKey = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY"];
+const projectId = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_PROJECT_ID"];
 
-const firebaseConfig = {
-  apiKey,
-  projectId,
-  appId,
+const firebaseConfig: Record<string, string> = {
+  apiKey: apiKey ?? "",
+  projectId: projectId ?? "",
+  appId: appId ?? "",
   messagingSenderId: appId?.split(":")[1] ?? "",
 };
 
