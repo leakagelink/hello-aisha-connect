@@ -20,7 +20,12 @@ function HomePage() {
   const me = profileQuery.data;
 
   useEffect(() => {
-    if (me && !me.profile?.username) navigate({ to: "/setup", replace: true });
+    if (!me) return;
+    if (me.isStaff) {
+      navigate({ to: "/admin", replace: true });
+      return;
+    }
+    if (!me.profile?.username) navigate({ to: "/setup", replace: true });
   }, [me, navigate]);
 
   const openConversation = (conversations.data ?? []).find((c) =>

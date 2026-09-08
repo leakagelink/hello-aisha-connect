@@ -61,6 +61,30 @@ function AdminHome() {
     },
   });
 
+  const previews = useQuery({
+    queryKey: ["admin-previews"],
+    enabled: !!me?.isStaff,
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("conversation_id, content, created_at, is_read, sender_id")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const map: Record<string, { content: string; created_at: string; unread: number }> = {};
+      for (const m of data ?? []) {
+        const entry = (map[m.conversation_id] ??= {
+          content: m.content,
+          created_at: m.created_at,
+          unread: 0,
+        });
+        if (!m.is_read && m.sender_id !== me?.userId) entry.unread += 1;
+      }
+      return map;
+    },
+  });
+
   const counts = useQuery({
     queryKey: ["admin-counts"],
     enabled: !!me?.isStaff,
@@ -236,6 +260,18 @@ function AdminHome() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       Topic: {c.topic ?? "Not specified"} · Status: {c.status}
                     </p>
+                    {previews.data?.[c.id] ? (
+                      <div className="mt-2 flex items-start justify-between gap-2">
+                        <p className="line-clamp-2 text-sm">{previews.data[c.id]!.content}</p>
+                        {previews.data[c.id]!.unread > 0 ? (
+                          <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+                            {previews.data[c.id]!.unread} new
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-muted-foreground">No messages yet.</p>
+                    )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {c.status === "requested" ? (
                         <>
