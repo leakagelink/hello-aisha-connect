@@ -54,18 +54,20 @@ function DeleteAccountPage() {
       });
       if (error) throw error;
       await logEvent("account_deletion_requested");
-      try {
-        await deleteMyAccountNow();
-        await supabase.auth.signOut();
-      } catch {
-        // Falls back to the queued deletion request handled by the team.
-      }
+      await deleteMyAccountNow();
+      await supabase.auth.signOut();
       setDone(true);
     } catch (err) {
+      const failed = err instanceof Error && err.message.includes("DELETION_FAILED");
       toast.error(
-        err instanceof Error ? err.message : "We couldn't submit that. Please try again.",
+        failed
+          ? "We couldn't complete your account deletion right now. Please try again."
+          : err instanceof Error
+            ? err.message
+            : "We couldn't submit that. Please try again.",
       );
     } finally {
+
       setBusy(false);
     }
   };
