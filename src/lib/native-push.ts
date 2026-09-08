@@ -89,7 +89,11 @@ export async function disableNativePush(userId: string): Promise<void> {
  * notification (which routes the user to the right screen).
  */
 export function listenNativePush(handlers: {
-  onForeground?: (n: { title?: string; body?: string; path?: string }) => void;
+  onForeground?: (n: {
+    title?: string | undefined;
+    body?: string | undefined;
+    path?: string | undefined;
+  }) => void;
   onOpen?: (path: string) => void;
 }): () => void {
   if (!isNativeApp()) return () => {};
