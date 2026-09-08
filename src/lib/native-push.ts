@@ -36,6 +36,17 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
   try {
     const PushNotifications = await pushPlugin();
 
+    if (Capacitor.getPlatform() === "android") {
+      await PushNotifications.createChannel({
+        id: ANDROID_CHANNEL_ID,
+        name: "Aisha messages",
+        description: "Notifications when Aisha replies or becomes available",
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+      });
+    }
+
     let perm = await PushNotifications.checkPermissions();
     if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") {
       perm = await PushNotifications.requestPermissions();
