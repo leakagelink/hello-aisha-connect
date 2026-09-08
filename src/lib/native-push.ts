@@ -29,9 +29,28 @@ export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
 }
 
+/**
+ * Loads the native push plugin. The plugin object is wrapped so it is never the
+ * resolved value of a promise: Capacitor proxies treat any property lookup
+ * (including `then`) as a native call, which throws
+ * "PushNotifications.then() is not implemented".
+ */
 async function pushPlugin() {
-  const { PushNotifications } = await import("@capacitor/push-notifications");
-  return PushNotifications;
+  const mod = await import("@capacitor/push-notifications");
+  return { plugin: mod.PushNotifications };
+}
+
+type ListenerHandle = { remove: () => Promise<void> };
+
+/** addListener may return a handle or a promise of one depending on version. */
+async function onEvent(
+  plugin: Awaited<ReturnType<typeof pushPlugin>>["plugin"],
+  event: string,
+  cb: (payload: never) => void,
+): Promise<ListenerHandle> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handle = await Promise.resolve((plugin as any).addListener(event, cb));
+  return handle as ListenerHandle;
 }
 
 /**
@@ -47,7 +66,7 @@ export async function enableNativePush(userId: string): Promise<NativePushStatus
 export async function registerNativePush(userId: string): Promise<NativePushRegistration> {
   if (!isNativeApp()) return { status: "unsupported" };
   try {
-    const PushNotifications = await pushPlugin();
+    const { plugin: PushNotifications } = await pushPlugin();
 
     if (Capacitor.getPlatform() === "android") {
       await PushNotifications.createChannel({
@@ -80,22 +99,28 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
         finish({ token: null, error: "Firebase registration timed out. Rebuild the Android app after running npm run cap:sync." });
       }, 15000);
 
-      void Promise.all([
-        PushNotifications.addListener("registration", (t) => finish({ token: t.value })),
-        PushNotifications.addListener("registrationError", (error) => {
-          console.error("Native push registration failed:", error);
-          const detail = "error" in error ? String(error.error) : JSON.stringify(error);
-          finish({ token: null, error: detail });
-        }),
-      ])
-        .then(async ([registrationHandle, errorHandle]) => {
-          handles.push(registrationHandle, errorHandle);
+      void (async () => {
+        try {
+          handles.push(
+            await onEvent(PushNotifications, "registration", (t: never) =>
+              finish({ token: (t as { value: string }).value }),
+            ),
+            await onEvent(PushNotifications, "registrationError", (error: never) => {
+              console.error("Native push registration failed:", error);
+              const detail =
+                error && typeof error === "object" && "error" in error
+                  ? String((error as { error: unknown }).error)
+                  : JSON.stringify(error);
+              finish({ token: null, error: detail });
+            }),
+          );
           await PushNotifications.register();
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error("Native push registration failed:", error);
           finish({ token: null, error: error instanceof Error ? error.message : String(error) });
-        });
+        }
+      })();
+
     });
 
     if (!registration.token) {
@@ -152,20 +177,24 @@ export function startNativeTokenSync(userId: string): () => void {
 
   void (async () => {
     try {
-      const PushNotifications = await pushPlugin();
+      const { plugin: PushNotifications } = await pushPlugin();
       if (cancelled) return;
 
-      const handle = await PushNotifications.addListener("registration", (t) => {
-        void saveNativeToken(userId, t.value);
+      const handle = await onEvent(PushNotifications, "registration", (t: never) => {
+        void saveNativeToken(userId, (t as { value: string }).value);
       });
       cleanups.push(() => void handle.remove());
 
-      const errorHandle = await PushNotifications.addListener("registrationError", (err) => {
-        const detail = "error" in err ? String(err.error) : JSON.stringify(err);
+      const errorHandle = await onEvent(PushNotifications, "registrationError", (err: never) => {
+        const detail =
+          err && typeof err === "object" && "error" in err
+            ? String((err as { error: unknown }).error)
+            : JSON.stringify(err);
         console.error("Native push registration failed:", detail);
         rememberPushError(detail);
       });
       cleanups.push(() => void errorHandle.remove());
+
 
       // Retry a token that arrived before the account was ready.
       const pending =
@@ -193,7 +222,7 @@ export function startNativeTokenSync(userId: string): () => void {
 export async function autoRegisterNativePush(userId: string): Promise<void> {
   if (!isNativeApp()) return;
   try {
-    const PushNotifications = await pushPlugin();
+    const { plugin: PushNotifications } = await pushPlugin();
     const perm = await PushNotifications.checkPermissions();
     if (perm.receive !== "granted") return;
     const result = await registerNativePush(userId);
@@ -209,7 +238,7 @@ export async function autoRegisterNativePush(userId: string): Promise<void> {
 export async function disableNativePush(userId: string): Promise<void> {
   if (!isNativeApp()) return;
   try {
-    const PushNotifications = await pushPlugin();
+    const { plugin: PushNotifications } = await pushPlugin();
     await PushNotifications.removeAllListeners();
     await supabase
       .from("push_tokens")
@@ -240,13 +269,15 @@ export function listenNativePush(handlers: {
 
   void (async () => {
     try {
-      const PushNotifications = await pushPlugin();
+      const { plugin: PushNotifications } = await pushPlugin();
       if (cancelled) return;
 
-      const received = await PushNotifications.addListener(
+      const received = await onEvent(
+        PushNotifications,
         "pushNotificationReceived",
-        (n) => {
-          const data = (n.data ?? {}) as Record<string, string>;
+        (raw: never) => {
+          const n = raw as { title?: string; body?: string; data?: Record<string, string> };
+          const data = n.data ?? {};
           handlers.onForeground?.({
             title: n.title ?? undefined,
             body: n.body ?? undefined,
@@ -256,15 +287,17 @@ export function listenNativePush(handlers: {
       );
       cleanups.push(() => void received.remove());
 
-      const opened = await PushNotifications.addListener(
+      const opened = await onEvent(
+        PushNotifications,
         "pushNotificationActionPerformed",
-        (action) => {
-          const data = (action.notification.data ?? {}) as Record<string, string>;
-          const path = data["path"];
+        (raw: never) => {
+          const action = raw as { notification: { data?: Record<string, string> } };
+          const path = (action.notification.data ?? {})["path"];
           if (path) handlers.onOpen?.(path);
         },
       );
       cleanups.push(() => void opened.remove());
+
     } catch {
       /* plugin unavailable */
     }
