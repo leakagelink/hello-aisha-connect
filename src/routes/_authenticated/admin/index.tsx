@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { sendConversationPush } from "@/lib/notifications.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +31,7 @@ function AdminHome() {
   const me = useProfile().data;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const sendPush = useServerFn(sendConversationPush);
 
   useEffect(() => {
     if (me && !me.isStaff) navigate({ to: "/home", replace: true });
@@ -135,7 +138,12 @@ function AdminHome() {
       toast.error(error.message);
       return;
     }
-    if (action === "accept") await logEvent("conversation_accepted");
+    if (action === "accept") {
+      await logEvent("conversation_accepted");
+      sendPush({ data: { conversationId: conversation.id, type: "accepted" } }).catch((err) =>
+        console.error("Push send failed:", err),
+      );
+    }
     if (action === "close") await logEvent("conversation_closed");
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
   };
