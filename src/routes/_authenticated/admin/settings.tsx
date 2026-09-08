@@ -133,6 +133,21 @@ function AdminSettings() {
       </section>
 
       <section className="card-soft mt-4 p-4">
+        <h2 className="text-sm font-bold">Test notifications</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Sends a test alert to every phone that has notifications turned on.
+        </p>
+        <Button
+          variant="outline"
+          className="mt-3 min-h-12 w-full rounded-full"
+          onClick={runTestPush}
+          disabled={sendingTest}
+        >
+          {sendingTest ? "Sending…" : "Send test notification to all"}
+        </Button>
+      </section>
+
+      <section className="card-soft mt-4 p-4">
         <h2 className="text-sm font-bold">Account</h2>
         <p className="mt-2 text-sm text-muted-foreground">Signed in as {me.profile?.username ?? "Aisha"}</p>
         <Button
