@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
 import { AishaAvatar } from "@/components/AisArt";
+import { NotificationBell } from "@/components/NotificationBell";
 import { LoadingView, ErrorView, EmptyView } from "@/components/StateViews";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +48,10 @@ function ChatsPage() {
   return (
     <main className="min-h-screen bg-soft-gradient pb-28">
       <div className="mx-auto w-full max-w-md px-5 pt-8">
-        <h1 className="text-2xl font-extrabold">Chats</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-extrabold">Chats</h1>
+          <NotificationBell />
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">Your conversations with Aisha.</p>
 
         <div className="mt-6">

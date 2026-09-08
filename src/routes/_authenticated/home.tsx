@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/BottomNav";
 import { AishaAvatar, BrandMark } from "@/components/AisArt";
+import { NotificationBell } from "@/components/NotificationBell";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { useProfile, useAvailability, useMyConversations } from "@/hooks/useAppData";
 import { ShieldCheck, LifeBuoy, HeartPulse, MessageCircle } from "lucide-react";
@@ -45,14 +46,18 @@ function HomePage() {
             <BrandMark className="size-8" />
             <span className="text-sm font-semibold">Hello Aisha</span>
           </div>
-          {me?.isStaff ? (
-            <Link
-              to="/admin"
-              className="rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground"
-            >
-              Admin
-            </Link>
-          ) : null}
+          <div className="flex items-center gap-1">
+            {me?.isStaff ? (
+              <Link
+                to="/admin"
+                className="rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground"
+              >
+                Admin
+              </Link>
+            ) : (
+              <NotificationBell />
+            )}
+          </div>
         </div>
 
         {profileQuery.isLoading ? (
