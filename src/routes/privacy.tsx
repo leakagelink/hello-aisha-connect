@@ -64,11 +64,16 @@ function PrivacyPage() {
 
       <Section heading="Deleting your data">
         <p>
-          You can delete your conversation history and request full account deletion from your
-          profile. A limited record of safety and abuse-prevention events may be retained where it
-          is needed for security, fraud prevention, or legal reasons, normally for up to 12 months.
+          You can delete your conversation history and delete your account from your profile.
+          Account deletion is permanent and immediate: your profile, conversations, messages,
+          check-ins, onboarding answers, notification tokens and sign-in credentials are erased.
+          Where a report or safety action involved your account, we keep only a coded internal
+          reference to that event — no email address, no profile details and no conversation
+          content — which is automatically erased after 12 months and used only for security,
+          fraud prevention, or legal reasons.
         </p>
       </Section>
+
       <Section heading="Contact us">
         <p>
           You can write to us at{" "}

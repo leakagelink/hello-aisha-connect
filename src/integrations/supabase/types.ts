@@ -16,27 +16,33 @@ export type Database = {
     Tables: {
       account_deletion_requests: {
         Row: {
+          attempts: number
           created_at: string
           email: string | null
           id: string
+          last_error: string | null
           processed_at: string | null
           reason: string | null
           status: string
           user_id: string
         }
         Insert: {
+          attempts?: number
           created_at?: string
           email?: string | null
           id?: string
+          last_error?: string | null
           processed_at?: string | null
           reason?: string | null
           status?: string
           user_id: string
         }
         Update: {
+          attempts?: number
           created_at?: string
           email?: string | null
           id?: string
+          last_error?: string | null
           processed_at?: string | null
           reason?: string | null
           status?: string
@@ -365,6 +371,36 @@ export type Database = {
           },
         ]
       }
+      retained_safety_records: {
+        Row: {
+          created_at: string
+          id: string
+          occurred_at: string
+          reason: string | null
+          record_type: string
+          retain_until: string
+          subject_ref: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          reason?: string | null
+          record_type: string
+          retain_until?: string
+          subject_ref: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          reason?: string | null
+          record_type?: string
+          retain_until?: string
+          subject_ref?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           completed_at: string | null
@@ -438,6 +474,12 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _uid: string }; Returns: boolean }
+      purge_expired_safety_records: { Args: never; Returns: number }
+      purge_user_data: { Args: { _user_id: string }; Returns: undefined }
+      record_deletion_failure: {
+        Args: { _error: string; _user_id: string }
+        Returns: undefined
+      }
       request_account_deletion: {
         Args: { _reason?: string }
         Returns: undefined

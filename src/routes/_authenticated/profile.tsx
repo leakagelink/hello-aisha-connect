@@ -156,9 +156,10 @@ function ProfilePage() {
       await supabase.auth.signOut();
       navigate({ to: "/auth", replace: true });
     } catch {
-      toast.success("Your deletion request has been received and will be completed shortly.");
+      toast.error("We couldn't complete your account deletion right now. Please try again.");
     }
   };
+
 
   const signOut = async () => {
     await queryClient.cancelQueries();
@@ -264,10 +265,11 @@ function ProfilePage() {
             onConfirm={deleteHistory}
           />
           <ConfirmRow
-            label="Request account deletion"
+            label="Delete my account"
             title="Delete my account"
-            description="This starts permanent deletion of your account, profile, conversations and check-ins. A limited record of safety or abuse-prevention events may be kept for up to 12 months where required for security, fraud prevention, or legal reasons."
-            confirmLabel="Request deletion"
+            description="This permanently deletes your account, profile, conversations, messages, check-ins and notification settings right away. Where a report or safety action involved your account, only a coded internal reference is kept for up to 12 months, then erased automatically."
+            confirmLabel="Delete permanently"
+
             onConfirm={requestDeletion}
           />
           <NavRow to="/delete-account" label="Account deletion page (web)" />
