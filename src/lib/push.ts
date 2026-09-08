@@ -61,7 +61,7 @@ export async function enablePush(userId: string): Promise<PushStatus> {
       : await Notification.requestPermission();
   if (permission !== "granted") return "denied";
 
-  const query = new URLSearchParams(firebaseConfig).toString();
+  const query = new URLSearchParams(firebaseConfig as Record<string, string>).toString();
   const registration = await navigator.serviceWorker.register(
     `/firebase-messaging-sw.js?${query}`,
   );
