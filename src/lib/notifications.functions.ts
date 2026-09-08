@@ -40,10 +40,12 @@ export const sendConversationPush = createServerFn({ method: "POST" })
 
     const { data: conv } = await supabaseAdmin
       .from("conversations")
-      .select("user_id, status")
+      .select("user_id, status, blocked_by_user")
       .eq("id", data.conversationId)
       .maybeSingle();
     if (!conv?.user_id) return { sent: false, reason: "no-user" };
+    // A member who blocked the conversation must not receive any further alerts.
+    if (conv.blocked_by_user) return { sent: false, reason: "blocked" };
 
     // Respect the member's notification preference.
     const { data: profile } = await supabaseAdmin
@@ -296,10 +298,11 @@ export const sendStaffPush = createServerFn({ method: "POST" })
     // Only the conversation's own member may trigger this.
     const { data: conv } = await supabaseAdmin
       .from("conversations")
-      .select("user_id")
+      .select("user_id, blocked_by_user")
       .eq("id", data.conversationId)
       .maybeSingle();
     if (!conv || conv.user_id !== context.userId) return { sent: false, reason: "forbidden" };
+    if (conv.blocked_by_user) return { sent: false, reason: "blocked" };
 
     const { data: staffRoles } = await supabaseAdmin
       .from("user_roles")
