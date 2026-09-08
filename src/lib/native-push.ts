@@ -99,22 +99,28 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
         finish({ token: null, error: "Firebase registration timed out. Rebuild the Android app after running npm run cap:sync." });
       }, 15000);
 
-      void Promise.all([
-        PushNotifications.addListener("registration", (t) => finish({ token: t.value })),
-        PushNotifications.addListener("registrationError", (error) => {
-          console.error("Native push registration failed:", error);
-          const detail = "error" in error ? String(error.error) : JSON.stringify(error);
-          finish({ token: null, error: detail });
-        }),
-      ])
-        .then(async ([registrationHandle, errorHandle]) => {
-          handles.push(registrationHandle, errorHandle);
+      void (async () => {
+        try {
+          handles.push(
+            await onEvent(PushNotifications, "registration", (t: never) =>
+              finish({ token: (t as { value: string }).value }),
+            ),
+            await onEvent(PushNotifications, "registrationError", (error: never) => {
+              console.error("Native push registration failed:", error);
+              const detail =
+                error && typeof error === "object" && "error" in error
+                  ? String((error as { error: unknown }).error)
+                  : JSON.stringify(error);
+              finish({ token: null, error: detail });
+            }),
+          );
           await PushNotifications.register();
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error("Native push registration failed:", error);
           finish({ token: null, error: error instanceof Error ? error.message : String(error) });
-        });
+        }
+      })();
+
     });
 
     if (!registration.token) {
