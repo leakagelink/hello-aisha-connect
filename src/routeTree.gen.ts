@@ -17,6 +17,8 @@ import { Route as GuidelinesRouteImport } from './routes/guidelines'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedRequestRouteImport } from './routes/_authenticated/request'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 
 const IndexRoute = IndexRouteImport.update({
@@ -58,6 +60,16 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRequestRoute = AuthenticatedRequestRouteImport.update({
+  id: '/request',
+  path: '/request',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   id: '/setup',
   path: '/setup',
@@ -72,6 +84,8 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +96,8 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/request': typeof AuthenticatedRequestRoute
   '/setup': typeof AuthenticatedSetupRoute
 }
 export interface FileRoutesById {
@@ -94,6 +110,8 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/request': typeof AuthenticatedRequestRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +124,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/safety'
     | '/terms'
+    | '/home'
+    | '/request'
     | '/setup'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +136,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/safety'
     | '/terms'
+    | '/home'
+    | '/request'
     | '/setup'
   id:
     | '__root__'
@@ -127,6 +149,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/safety'
     | '/terms'
+    | '/_authenticated/home'
+    | '/_authenticated/request'
     | '/_authenticated/setup'
   fileRoutesById: FileRoutesById
 }
@@ -199,6 +223,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/request': {
+      id: '/_authenticated/request'
+      path: '/request'
+      fullPath: '/request'
+      preLoaderRoute: typeof AuthenticatedRequestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/setup': {
       id: '/_authenticated/setup'
       path: '/setup'
@@ -210,10 +248,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedRequestRoute: typeof AuthenticatedRequestRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedRequestRoute: AuthenticatedRequestRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
 }
 
