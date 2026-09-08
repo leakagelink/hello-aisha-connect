@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const { user, loading } = useSession();
   const navigate = useNavigate();
+  useMessageNotifications();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", replace: true });
