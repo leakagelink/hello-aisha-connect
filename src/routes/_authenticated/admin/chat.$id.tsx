@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowLeft, Send } from "lucide-react";
+import { sendConversationPush } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +29,7 @@ function AdminChat() {
   const { id } = Route.useParams();
   const me = useProfile().data;
   const queryClient = useQueryClient();
+  const sendPush = useServerFn(sendConversationPush);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const [action, setAction] = useState("warning");
@@ -128,6 +131,10 @@ function AdminChat() {
     }
     setDraft("");
     await logEvent("first_human_reply_received");
+    // Send a real push so the member is alerted even if the app is closed.
+    sendPush({ data: { conversationId: id, type: "reply", content } }).catch((err) =>
+      console.error("Push send failed:", err),
+    );
     queryClient.invalidateQueries({ queryKey: ["admin-messages", id] });
     queryClient.invalidateQueries({ queryKey: ["admin-conversation", id] });
   };
