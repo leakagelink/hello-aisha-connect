@@ -48,7 +48,7 @@ function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: authReturnUrl() },
         });
         if (error) throw error;
         if (!data.session) {
@@ -72,7 +72,7 @@ function AuthPage() {
   const google = async () => {
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: authReturnUrl(),
     });
     if (result.error) {
       setBusy(false);
