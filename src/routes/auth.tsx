@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 import { logEvent } from "@/lib/aisha";
+import { authReturnUrl } from "@/lib/site";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
