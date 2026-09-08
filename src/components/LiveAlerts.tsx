@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { listenForegroundPush } from "@/lib/push";
+import { listenNativePush } from "@/lib/native-push";
 
 /**
  * Live alerts for members: a real toast (and a browser notification when the
@@ -95,6 +96,24 @@ export function LiveAlerts() {
       supabase.removeChannel(channel);
     };
   }, [me?.userId, me?.isStaff, queryClient, navigate]);
+
+  // Native (Android app) pushes: foreground delivery and taps on a
+  // background/system notification.
+  useEffect(() => {
+    if (!me?.userId || me.isStaff) return;
+    return listenNativePush({
+      onForeground: (n) => {
+        toast(n.title ?? "Hello Aisha", {
+          description: n.body,
+          action: n.path
+            ? { label: "Open", onClick: () => navigate({ to: n.path as never }) }
+            : undefined,
+        });
+        queryClient.invalidateQueries({ queryKey: ["chats"] });
+      },
+      onOpen: (path) => navigate({ to: path as never }),
+    });
+  }, [me?.userId, me?.isStaff, navigate, queryClient]);
 
   // Push messages that arrive while the app is open in the foreground.
   useEffect(() => {
