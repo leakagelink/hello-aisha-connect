@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { TOPICS, logEvent } from "@/lib/aisha";
 import { sendStaffPush } from "@/lib/notifications.functions";
-import { useAvailability } from "@/hooks/useAppData";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/request")({
@@ -17,7 +16,6 @@ function RequestPage() {
   const [topic, setTopic] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
-  const availability = useAvailability();
 
   const create = async () => {
     setBusy(true);
