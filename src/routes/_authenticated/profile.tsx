@@ -169,7 +169,15 @@ function ProfilePage() {
             Report a Problem
             <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
           </button>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="flex min-h-13 w-full items-center justify-between px-1 text-left text-sm font-medium"
+          >
+            Contact us ({SUPPORT_EMAIL})
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+          </a>
         </Group>
+
 
         <Group title="Notifications">
           <div className="flex min-h-13 items-center justify-between gap-4 px-1">
