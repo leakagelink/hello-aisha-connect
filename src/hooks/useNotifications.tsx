@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
+import { isPushActive } from "@/lib/push";
 
 type Permission = "default" | "granted" | "denied" | "unsupported";
 
@@ -25,10 +26,16 @@ export function useNotificationPermission() {
   return { permission, request };
 }
 
+/**
+ * Fallback device alert for background tabs. When real Firebase push is active
+ * for this device, the service worker handles background delivery instead, so we
+ * skip it here to avoid a duplicate notification.
+ */
 function show(title: string, body: string) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   if (typeof document !== "undefined" && document.visibilityState === "visible") return;
+  if (isPushActive()) return;
   try {
     new Notification(title, { body, icon: "/icon-192.png", tag: title });
   } catch {
