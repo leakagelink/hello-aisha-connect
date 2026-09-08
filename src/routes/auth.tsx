@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BrandMark } from "@/components/AisArt";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 import { logEvent } from "@/lib/aisha";
 import { authReturnUrl } from "@/lib/site";
