@@ -1,12 +1,22 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getMessaging, getToken, deleteToken, isSupported, type Messaging } from "firebase/messaging";
 import { supabase } from "@/integrations/supabase/client";
+import { FIREBASE_WEB_CONFIG, FIREBASE_VAPID_KEY } from "@/lib/firebase-config";
 
+// Prefer connector-provided env vars (set when "Include web push" is enabled),
+// then fall back to the public constants in firebase-config.ts.
 const env = import.meta.env as Record<string, string | undefined>;
-const appId = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_APP_ID"];
-const vapidKey = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY"];
-const apiKey = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY"];
-const projectId = env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_PROJECT_ID"];
+const apiKey =
+  env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY"] ||
+  FIREBASE_WEB_CONFIG.apiKey;
+const projectId =
+  env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_PROJECT_ID"] ||
+  FIREBASE_WEB_CONFIG.projectId;
+const appId =
+  env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_APP_ID"] ||
+  FIREBASE_WEB_CONFIG.appId;
+export const vapidKey =
+  env["VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY"] || FIREBASE_VAPID_KEY;
 
 interface FirebaseConfig {
   apiKey: string;
@@ -16,10 +26,10 @@ interface FirebaseConfig {
 }
 
 const firebaseConfig: FirebaseConfig = {
-  apiKey: apiKey ?? "",
-  projectId: projectId ?? "",
-  appId: appId ?? "",
-  messagingSenderId: appId?.split(":")[1] ?? "",
+  apiKey,
+  projectId,
+  appId,
+  messagingSenderId: appId?.split(":")[1] ?? FIREBASE_WEB_CONFIG.messagingSenderId,
 };
 
 const PUSH_ACTIVE_FLAG = "hello-aisha-push-active";
