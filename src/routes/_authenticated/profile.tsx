@@ -22,6 +22,7 @@ import { ReportDialog } from "@/components/ReportDialog";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
+import { useNotificationPermission } from "@/hooks/useNotifications";
 import { logEvent } from "@/lib/aisha";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -34,6 +35,7 @@ function ProfilePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [reportOpen, setReportOpen] = useState(false);
+  const { permission, request: requestPermission } = useNotificationPermission();
 
   const toggleNotifications = async (value: boolean) => {
     if (!me?.userId) return;
@@ -137,6 +139,22 @@ function ProfilePage() {
           <p className="px-1 text-xs text-muted-foreground">
             We only notify you when Aisha replies or accepts your conversation request.
           </p>
+          {permission !== "unsupported" && (
+            <div className="flex min-h-13 items-center justify-between gap-4 px-1">
+              <span className="text-sm">
+                {permission === "granted"
+                  ? "Alerts on this device are on."
+                  : permission === "denied"
+                    ? "Alerts are blocked in your browser settings."
+                    : "Allow alerts on this device"}
+              </span>
+              {permission === "default" && (
+                <Button size="sm" variant="secondary" onClick={() => void requestPermission()}>
+                  Allow
+                </Button>
+              )}
+            </div>
+          )}
         </Group>
 
         <Group title="Account management">
