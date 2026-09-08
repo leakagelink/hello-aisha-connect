@@ -54,6 +54,30 @@ async function onEvent(
 }
 
 /**
+ * Creates the high-importance Android channel used for every push we send.
+ * Creating it again with the same id is a no-op, so this is safe to call often.
+ */
+async function ensureAndroidChannel(
+  plugin: Awaited<ReturnType<typeof pushPlugin>>["plugin"],
+): Promise<void> {
+  if (Capacitor.getPlatform() !== "android") return;
+  try {
+    await plugin.createChannel({
+      id: ANDROID_CHANNEL_ID,
+      name: "Aisha messages",
+      description: "Notifications when Aisha replies or becomes available",
+      importance: 5,
+      visibility: 1,
+      vibration: true,
+      sound: "default",
+      lights: true,
+    });
+  } catch (error) {
+    console.error("Could not create the Android notification channel:", error);
+  }
+}
+
+/**
  * Asks for native notification permission, registers with FCM and stores the
  * device registration token so the server can target this device.
  */
