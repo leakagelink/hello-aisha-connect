@@ -272,10 +272,12 @@ export function listenNativePush(handlers: {
       const { plugin: PushNotifications } = await pushPlugin();
       if (cancelled) return;
 
-      const received = await PushNotifications.addListener(
+      const received = await onEvent(
+        PushNotifications,
         "pushNotificationReceived",
-        (n) => {
-          const data = (n.data ?? {}) as Record<string, string>;
+        (raw: never) => {
+          const n = raw as { title?: string; body?: string; data?: Record<string, string> };
+          const data = n.data ?? {};
           handlers.onForeground?.({
             title: n.title ?? undefined,
             body: n.body ?? undefined,
@@ -285,15 +287,17 @@ export function listenNativePush(handlers: {
       );
       cleanups.push(() => void received.remove());
 
-      const opened = await PushNotifications.addListener(
+      const opened = await onEvent(
+        PushNotifications,
         "pushNotificationActionPerformed",
-        (action) => {
-          const data = (action.notification.data ?? {}) as Record<string, string>;
-          const path = data["path"];
+        (raw: never) => {
+          const action = raw as { notification: { data?: Record<string, string> } };
+          const path = (action.notification.data ?? {})["path"];
           if (path) handlers.onOpen?.(path);
         },
       );
       cleanups.push(() => void opened.remove());
+
     } catch {
       /* plugin unavailable */
     }
