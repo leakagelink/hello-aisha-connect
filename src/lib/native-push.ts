@@ -6,6 +6,11 @@ export const ANDROID_CHANNEL_ID = "hello_aisha_channel";
 
 export type NativePushStatus = "registered" | "denied" | "unsupported" | "error";
 
+export type NativePushRegistration = {
+  status: NativePushStatus;
+  detail?: string;
+};
+
 /** True when the app runs inside the native Android/iOS shell. */
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
@@ -21,49 +26,79 @@ async function pushPlugin() {
  * device registration token so the server can target this device.
  */
 export async function enableNativePush(userId: string): Promise<NativePushStatus> {
-  if (!isNativeApp()) return "unsupported";
+  const result = await registerNativePush(userId);
+  return result.status;
+}
+
+/** Registers this installation and verifies that its token reached storage. */
+export async function registerNativePush(userId: string): Promise<NativePushRegistration> {
+  if (!isNativeApp()) return { status: "unsupported" };
   try {
     const PushNotifications = await pushPlugin();
+
+    if (Capacitor.getPlatform() === "android") {
+      await PushNotifications.createChannel({
+        id: ANDROID_CHANNEL_ID,
+        name: "Aisha messages",
+        description: "Notifications when Aisha replies or becomes available",
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+      });
+    }
 
     let perm = await PushNotifications.checkPermissions();
     if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") {
       perm = await PushNotifications.requestPermissions();
     }
-    if (perm.receive !== "granted") return "denied";
+    if (perm.receive !== "granted") return { status: "denied" };
 
     const token = await new Promise<string | null>((resolve) => {
       let settled = false;
+      const handles: Array<{ remove: () => Promise<void> }> = [];
+      const finish = (value: string | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        handles.forEach((handle) => void handle.remove());
+        resolve(value);
+      };
       const timer = setTimeout(() => {
-        if (!settled) {
-          settled = true;
-          resolve(null);
-        }
+        finish(null);
       }, 15000);
 
-      void PushNotifications.addListener("registration", (t) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        resolve(t.value);
+      void PushNotifications.addListener("registration", (t) => finish(t.value)).then((handle) => {
+        handles.push(handle);
       });
-      void PushNotifications.addListener("registrationError", () => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        resolve(null);
+      void PushNotifications.addListener("registrationError", (error) => {
+        console.error("Native push registration failed:", error);
+        finish(null);
+      }).then((handle) => {
+        handles.push(handle);
       });
-      void PushNotifications.register();
+      void PushNotifications.register().catch((error) => {
+        console.error("Native push registration failed:", error);
+        finish(null);
+      });
     });
 
-    if (!token) return "error";
+    if (!token) return { status: "error", detail: "Firebase did not return a device token." };
 
-    await supabase.from("push_tokens").upsert(
+    const { error } = await supabase.from("push_tokens").upsert(
       { user_id: userId, token, platform: Capacitor.getPlatform() },
       { onConflict: "user_id,token" },
     );
-    return "registered";
-  } catch {
-    return "error";
+    if (error) {
+      console.error("Could not save native push token:", error.message);
+      return { status: "error", detail: error.message };
+    }
+    return { status: "registered" };
+  } catch (error) {
+    console.error("Native push setup failed:", error);
+    return {
+      status: "error",
+      detail: error instanceof Error ? error.message : "Native notification setup failed.",
+    };
   }
 }
 

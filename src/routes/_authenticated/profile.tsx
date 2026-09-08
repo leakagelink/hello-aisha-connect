@@ -26,7 +26,7 @@ import { logEvent } from "@/lib/aisha";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 import { enablePush, disablePush, isPushConfigured, currentPermission, type PushStatus } from "@/lib/push";
-import { isNativeApp, enableNativePush, disableNativePush } from "@/lib/native-push";
+import { isNativeApp, registerNativePush, disableNativePush } from "@/lib/native-push";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -69,16 +69,21 @@ function ProfilePage() {
   const enableDevicePush = async () => {
     if (!me?.userId) return;
     if (isNativeApp()) {
-      const native = await enableNativePush(me.userId);
-      if (native === "registered") {
+      const native = await registerNativePush(me.userId);
+      if (native.status === "registered") {
+        await supabase
+          .from("profiles")
+          .update({ notifications_enabled: true })
+          .eq("id", me.userId);
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
         setPushStatus("registered");
         toast.success("Alerts on this device are on.");
         tokenCount.refetch();
-      } else if (native === "denied") {
+      } else if (native.status === "denied") {
         setPushStatus("denied");
         toast.error("Alerts are blocked in your phone settings.");
       } else {
-        toast.error("We couldn't turn on alerts on this device.");
+        toast.error(native.detail || "We couldn't register this phone for alerts.");
       }
       return;
     }
