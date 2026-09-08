@@ -1,17 +1,5 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-export default defineConfig({
-  // Disable SSR to produce a static SPA that Capacitor can bundle
-  tanstackStart: {
-    ssr: false,
-  },
-  // Ensure Nitro generates a static entry point for mobile
-  nitro: {
-    preset: 'static',
-    prerender: {
-      routes: ['/'],
-      crawlLinks: false,
-      failOnError: false
-    }
-  }
-});
+// The hosted app is server-rendered. The static bundle used by the Android
+// app is produced separately by scripts/build-capacitor.mjs.
+export default defineConfig({});
