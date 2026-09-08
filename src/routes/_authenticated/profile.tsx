@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
@@ -22,8 +22,8 @@ import { ReportDialog } from "@/components/ReportDialog";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
-import { useNotificationPermission } from "@/hooks/useNotifications";
 import { logEvent } from "@/lib/aisha";
+import { enablePush, disablePush, isPushConfigured, currentPermission, type PushStatus } from "@/lib/push";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
