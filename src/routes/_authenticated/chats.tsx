@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
 import { AishaAvatar } from "@/components/AisArt";
+import { NotificationBell } from "@/components/NotificationBell";
 import { LoadingView, ErrorView, EmptyView } from "@/components/StateViews";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
