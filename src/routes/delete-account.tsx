@@ -89,19 +89,21 @@ function DeleteAccountPage() {
 
       <Section heading="What may be retained">
         <p>
-          Where a report or safety action involved your account, a limited record may be kept for
-          security, fraud prevention, and legal reasons. That record is normally kept for up to 12
-          months and is not used for any other purpose.
+          Where a report or safety action involved your account, we keep only a coded internal
+          reference to that event — no email address, no profile details and no conversation
+          content. It is automatically erased after 12 months and is used only for security, fraud
+          prevention, and legal reasons.
         </p>
       </Section>
 
       {done ? (
-        <Section heading="Request received">
+        <Section heading="Account deleted">
           <p>
-            Your deletion request has been recorded. Your account is now marked for deletion and
-            the Hello Aisha team will complete it. You will not be contacted for marketing.
+            Your account and data have been permanently deleted and you have been signed out. You
+            can no longer sign in with this account.
           </p>
         </Section>
+
       ) : (
         <form onSubmit={submit} className="card-soft space-y-4 p-5">
           <h2 className="text-base font-bold">Confirm your identity</h2>
