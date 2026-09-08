@@ -100,9 +100,11 @@ export function LiveAlerts() {
   // If the phone already granted notification permission (e.g. at install),
   // register this device silently so pushes arrive even when the app is closed.
   useEffect(() => {
-    if (!me?.userId || me.isStaff) return;
+    if (!me?.userId) return;
+    const stopSync = startNativeTokenSync(me.userId);
     void autoRegisterNativePush(me.userId);
-  }, [me?.userId, me?.isStaff]);
+    return stopSync;
+  }, [me?.userId]);
 
   // Native (Android app) pushes: foreground delivery and taps on a
   // background/system notification.
