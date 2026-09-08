@@ -35,7 +35,33 @@ function ProfilePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [reportOpen, setReportOpen] = useState(false);
-  const { permission, request: requestPermission } = useNotificationPermission();
+  const [pushStatus, setPushStatus] = useState<PushStatus | "idle">("idle");
+
+  useEffect(() => {
+    if (!isPushConfigured()) return setPushStatus("not-configured");
+    const perm = currentPermission();
+    if (perm === "unsupported") return setPushStatus("unsupported");
+    if (perm === "denied") return setPushStatus("denied");
+    // Defer "registered" detection to the query below.
+  }, []);
+
+  // Reflect the stored token so the toggle shows the right state across reloads.
+  const { data: tokenCount } = useProfile().data?.userId
+    ? (() => {
+        return useQuery({
+          queryKey: ["my-push-tokens"],
+          enabled: !!me?.userId,
+          queryFn: async () => {
+            const { count } = await supabase
+              .from("push_tokens")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", me!.userId);
+            return count ?? 0;
+          },
+        });
+      })()
+    : { data: 0 };
+  void tokenCount;
 
   const toggleNotifications = async (value: boolean) => {
     if (!me?.userId) return;
