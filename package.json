@@ -11,9 +11,10 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "cap:add": "cap add android && node scripts/prepare-android.mjs",
-    "cap:sync": "node scripts/build-capacitor.mjs && node scripts/prepare-android.mjs && cap sync android",
+    "cap:sync": "node scripts/prepare-android.mjs && cap sync android",
     "cap:open": "cap open android",
-    "build:android": "node scripts/build-capacitor.mjs"
+    "build:android": "node scripts/build-capacitor.mjs",
+    "postbuild": "node scripts/build-capacitor.mjs --skip-build --soft"
   },
   "overrides": {
     "rolldown": "1.2.1"
