@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Small status-bar icon for Hello Aisha notifications.
+  Android requires a flat, single-colour (white + alpha) drawable here.
+  Adaptive launcher icons are rejected by the system and the notification is
+  then dropped without any error, which is why this dedicated icon exists.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,3C7.03,3 3,6.58 3,11c0,2.35 1.15,4.46 2.97,5.9L5.2,20.4c-0.1,0.44 0.36,0.79 0.75,0.57l3.9,-2.2C10.55,18.92 11.26,19 12,19c4.97,0 9,-3.58 9,-8S16.97,3 12,3z" />
+</vector>
