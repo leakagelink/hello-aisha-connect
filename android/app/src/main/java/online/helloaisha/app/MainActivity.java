@@ -70,7 +70,7 @@ public class MainActivity extends BridgeActivity {
         content.setTranslationY(dp(18));
 
         final ImageView portrait = new ImageView(this);
-        portrait.setImageResource(com.getcapacitor.android.R.drawable.aisha_splash_logo);
+        portrait.setImageResource(R.drawable.aisha_splash_logo);
         portrait.setScaleType(ImageView.ScaleType.CENTER_CROP);
         portrait.setElevation(dp(18));
         LinearLayout.LayoutParams portraitParams = new LinearLayout.LayoutParams(dp(132), dp(132));
