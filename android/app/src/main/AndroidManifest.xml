@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -37,11 +39,11 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Required for notifications shown by the system while the app is in the background. -->
-        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="hello_aisha_channel" />
-        <!-- Must be a flat drawable: an adaptive launcher icon makes Android drop the notification. -->
+        <!-- Use ic_stat_notify as the small icon in the status bar -->
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_notify" />
+        <!-- This color #4C1D95 will be the background of the small icon in the tray -->
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_color" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="hello_aisha_channel" />
 
     </application>
 </manifest>
