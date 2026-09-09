@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accent colour Android applies to the small notification icon. -->
+    <color name="notification_color">#4C1D95</color>
+</resources>
