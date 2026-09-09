@@ -74,21 +74,29 @@ const csrfMiddleware = createCsrfMiddleware({
  * Inside the packaged app there is no server behind the local origin, so every
  * server call is sent to the live site instead.
  */
-const serverFnFetch: typeof fetch = (input, init) => {
+const serverFnFetch: typeof fetch = async (input, init) => {
   if (!isBundledApp()) return fetch(input, init);
   const base = serverOrigin();
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-  if (url.startsWith("/")) {
-    return fetch(`${base}${url}`, { ...init, mode: "cors", credentials: "omit" });
+  let target = url;
+  if (url.startsWith("/")) target = `${base}${url}`;
+  else if (url.startsWith(window.location.origin)) {
+    target = `${base}${url.slice(window.location.origin.length)}`;
+  } else {
+    return fetch(input, init);
   }
-  if (url.startsWith(window.location.origin)) {
-    return fetch(`${base}${url.slice(window.location.origin.length)}`, {
-      ...init,
-      mode: "cors",
-      credentials: "omit",
-    });
+
+  try {
+    const response = await fetch(target, { ...init, mode: "cors", credentials: "omit" });
+    if (!response.ok) {
+      // Diagnostic only: path and status, never tokens or message content.
+      console.warn(`Server call failed: ${new URL(target).pathname} -> ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.warn(`Server call could not be reached: ${new URL(target).pathname}`, error);
+    throw error;
   }
-  return fetch(input, init);
 };
 
 export const startInstance = createStart(() => ({
