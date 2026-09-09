@@ -43,6 +43,15 @@ function GuidelinesPage() {
         </ul>
       </Section>
 
+      <Section heading="Prohibited content">
+        <p>
+          Sexual content involving minors, threats of violence, hate speech, self-harm
+          encouragement, sexual solicitation, scams, and spam are never allowed and may be reported
+          to the authorities.
+        </p>
+        <p>Hello Aisha is for adults aged 18 and over only.</p>
+      </Section>
+
       <Section heading="Enforcement">
         <p>
           Hello Aisha may take action against abusive behaviour. Depending on what happened, that
@@ -51,12 +60,15 @@ function GuidelinesPage() {
         <p>Every action taken by our team is recorded internally.</p>
       </Section>
 
-      <Section heading="Reporting">
+      <Section heading="Reporting and blocking">
         <p>
-          You can report a problem from inside any conversation, or from your profile. Reports are
-          reviewed by the Hello Aisha team.
+          You can report a problem from inside any conversation, or from your profile. You can also
+          block a conversation at any time, which closes it immediately. Reports are reviewed by
+          authorised Hello Aisha personnel, who may read the reported conversation in order to act
+          on it.
         </p>
       </Section>
+
       <Section heading="Contact us">
         <p>
           You can write to us at{" "}

@@ -30,10 +30,12 @@ function SafetyPage() {
           local emergency services or seek immediate help from someone you trust.
         </p>
         <p>
-          Aisha is a person who listens. She cannot provide medical care, crisis intervention, or
-          emergency response.
+          Aisha is a person who listens. She cannot provide medical care, therapy, crisis
+          intervention, or emergency response, and Hello Aisha is not a substitute for professional
+          medical or mental-health care.
         </p>
       </Section>
+
 
       <Section heading="Emergency services">
         <p>
