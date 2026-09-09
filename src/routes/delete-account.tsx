@@ -79,13 +79,18 @@ function DeleteAccountPage() {
     >
       <Section heading="What will be deleted">
         <ul className="list-disc space-y-1 pl-5">
-          <li>Your profile and username</li>
+          <li>Your profile, username and email address</li>
           <li>Your conversations and messages with Aisha</li>
           <li>Your personal check-ins</li>
           <li>Your onboarding answers</li>
+          <li>Your reports and any internal notes about your conversations</li>
+          <li>Your device notification registrations (push tokens)</li>
+          <li>Your product event history</li>
           <li>Your sign-in credentials</li>
         </ul>
+        <p>Deletion is immediate and permanent. It cannot be undone.</p>
       </Section>
+
 
       <Section heading="What may be retained">
         <p>
