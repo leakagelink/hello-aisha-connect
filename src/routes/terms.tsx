@@ -23,13 +23,22 @@ function TermsPage() {
       <Section heading="What Hello Aisha is">
         <p>
           Hello Aisha provides friendly conversation and peer support with a real person. It is not
-          therapy, counselling, medical care, diagnosis, treatment, or an emergency service.
+          therapy, counselling, medical care, diagnosis, treatment, or an emergency service, and it
+          is not a substitute for professional medical or mental-health care.
+        </p>
+        <p>
+          If you are in immediate danger or may hurt yourself or someone else, contact your local
+          emergency services.
         </p>
         <p>It is not a dating service and does not connect you with random strangers.</p>
       </Section>
 
       <Section heading="Eligibility">
-        <p>You must be 18 years of age or older to create an account and use this service.</p>
+        <p>
+          You must be 18 years of age or older to create an account and use this service. You
+          confirm your age when you sign up. Accounts belonging to people under 18 are closed and
+          their data deleted.
+        </p>
       </Section>
 
       <Section heading="Your account">
@@ -38,6 +47,19 @@ function TermsPage() {
           activity on your account.
         </p>
       </Section>
+
+      <Section heading="Your content and moderation">
+        <p>
+          You keep responsibility for what you write. Messages pass through automated safety checks,
+          and authorised Hello Aisha personnel may review conversation content and reports where
+          that is necessary for safety, moderation, abuse prevention, service operation, or legal
+          reasons. See the Privacy Policy for details.
+        </p>
+        <p>
+          You can report a problem or block a conversation at any time from inside the app.
+        </p>
+      </Section>
+
 
       <Section heading="Acceptable use">
         <p>
