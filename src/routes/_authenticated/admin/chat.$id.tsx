@@ -383,7 +383,8 @@ function AdminChat() {
             </p>
             <Textarea
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              maxLength={2000}
+              onChange={(e) => setNote(e.target.value.slice(0, 2000))}
               placeholder="Add an internal note"
               className="min-h-24 rounded-2xl bg-card"
             />
