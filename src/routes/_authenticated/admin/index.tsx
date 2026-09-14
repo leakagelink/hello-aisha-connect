@@ -47,6 +47,7 @@ function AdminInbox() {
   const [replyFor, setReplyFor] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const onlineUsers = useOnlineUsers(me?.userId);
 
   useEffect(() => {
     if (me && !me.isStaff) navigate({ to: "/home", replace: true });
