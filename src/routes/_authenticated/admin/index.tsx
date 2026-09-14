@@ -12,6 +12,7 @@ import { LoadingView, ErrorView, EmptyView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { formatWhen, logEvent } from "@/lib/aisha";
+import { useOnlineUsers, isOnline } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
