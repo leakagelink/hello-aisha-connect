@@ -108,6 +108,27 @@ function AdminChat() {
     };
   }, [id, queryClient]);
 
+  // Same typing channel the member uses, so each side sees the other typing.
+  useEffect(() => {
+    if (!me?.userId) return;
+    const channel = supabase.channel(`typing-${id}`, { config: { broadcast: { self: false } } });
+    channel
+      .on("broadcast", { event: "typing" }, (message) => {
+        const body = message["payload"] as { userId?: string } | undefined;
+        if (body?.userId === me.userId) return;
+        setMemberTyping(true);
+        if (typingTimeout.current) clearTimeout(typingTimeout.current);
+        typingTimeout.current = setTimeout(() => setMemberTyping(false), 3000);
+      })
+      .subscribe();
+    typingChannel.current = channel;
+    return () => {
+      supabase.removeChannel(channel);
+      typingChannel.current = null;
+    };
+  }, [id, me?.userId]);
+
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.data]);
