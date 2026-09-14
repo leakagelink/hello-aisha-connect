@@ -130,6 +130,11 @@ const serverFnFetch: typeof fetch = async (input, init) => {
 
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, nativeCorsMiddleware, csrfMiddleware],
+  requestMiddleware: [
+    errorMiddleware,
+    securityHeadersMiddleware,
+    nativeCorsMiddleware,
+    csrfMiddleware,
+  ],
   serverFns: { fetch: serverFnFetch },
 }));
