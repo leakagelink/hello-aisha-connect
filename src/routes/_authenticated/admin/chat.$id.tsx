@@ -268,8 +268,24 @@ function AdminChat() {
           </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold">{member.data?.username ?? "Member"}</p>
-            <p className="text-xs text-muted-foreground">
-              {conversation.data?.status} · {conversation.data?.topic ?? "No topic"}
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-2 shrink-0 rounded-full",
+                  isOnline(onlineUsers, conversation.data?.user_id)
+                    ? "bg-emerald-500"
+                    : "bg-muted-foreground/40",
+                )}
+              />
+              <span className="truncate">
+                {memberTyping
+                  ? "Typing…"
+                  : isOnline(onlineUsers, conversation.data?.user_id)
+                    ? "Online"
+                    : "Offline"}{" "}
+                · {conversation.data?.status} · {conversation.data?.topic ?? "No topic"}
+              </span>
             </p>
           </div>
           <Button variant="outline" className="min-h-11 rounded-full" onClick={close}>
