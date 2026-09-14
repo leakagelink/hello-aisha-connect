@@ -19,6 +19,35 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+/**
+ * Baseline browser hardening headers on every response: stops content-type
+ * sniffing, keeps URLs out of third-party referrers, forces HTTPS on repeat
+ * visits and switches off device APIs the app never uses.
+ */
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "Permissions-Policy":
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), interest-cohort=()",
+  "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+  "X-DNS-Prefetch-Control": "off",
+};
+
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const result = await next();
+  const response = (result as unknown as { response?: Response }).response;
+  const target = response instanceof Response ? response : (result as unknown as Response);
+  if (target instanceof Response) {
+    for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+      if (!target.headers.has(key)) target.headers.set(key, value);
+    }
+  }
+  return result;
+});
+
+
+
 /** True for the packaged Android/iOS app talking to the live site. */
 function isNativeAppOrigin(origin: string | null): boolean {
   if (!origin) return false;
