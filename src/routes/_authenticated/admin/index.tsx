@@ -86,12 +86,16 @@ function AdminInbox() {
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      const map: Record<string, { content: string; created_at: string; unread: number }> = {};
+      const map: Record<
+        string,
+        { content: string; created_at: string; unread: number; lastSenderId: string | null }
+      > = {};
       for (const m of data ?? []) {
         const entry = (map[m.conversation_id] ??= {
           content: m.content,
           created_at: m.created_at,
           unread: 0,
+          lastSenderId: m.sender_id,
         });
         if (!m.is_read && m.sender_id !== me?.userId) entry.unread += 1;
       }
