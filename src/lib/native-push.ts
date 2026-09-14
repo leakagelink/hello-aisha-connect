@@ -288,7 +288,14 @@ export function startNativeTokenSync(userId: string): () => void {
 
       const registerIfAllowed = async () => {
         const state = await PushNotifications.checkPermissions();
-        if (state.receive === "granted") await PushNotifications.register();
+        if (state.receive === "granted") {
+          await PushNotifications.register();
+        } else if (state.receive === "denied") {
+          // The user revoked notification permission from system settings.
+          // Drop this device's token so the server stops targeting a device
+          // that will silently drop every push.
+          await pruneThisDeviceTokens(userId);
+        }
       };
       await registerIfAllowed();
 
