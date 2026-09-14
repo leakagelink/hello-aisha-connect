@@ -7,8 +7,37 @@ const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
 /** Android notification channel created on the native side. */
 const ANDROID_CHANNEL_ID = "hello_aisha_channel";
 
-/** Colour logo shown as the large image inside the expanded notification. */
-const NOTIFICATION_IMAGE_URL = "https://helloaisha.online/favicon.png";
+const RETRYABLE_FCM_STATUS = new Set([429, 500, 502, 503, 504]);
+
+/**
+ * Sends without a remote notification image. Android waits for that image to
+ * download before rendering on some devices, which made alerts intermittent
+ * on slow, restricted, or sleeping connections. Retry only temporary provider
+ * failures; permanent token errors are returned immediately for cleanup.
+ */
+async function sendFcm(headers: Record<string, string>, payload: unknown): Promise<Response> {
+  let response: Response | undefined;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      response = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      if (!RETRYABLE_FCM_STATUS.has(response.status) || attempt === 2) return response;
+      await response.text();
+    } catch (error) {
+      lastError = error;
+      if (attempt === 2) throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+  }
+
+  if (response) return response;
+  throw lastError instanceof Error ? lastError : new Error("FCM request failed");
+}
 
 /**
  * Sends a real Firebase Cloud Messaging push notification to every registered
@@ -86,10 +115,7 @@ export const sendConversationPush = createServerFn({ method: "POST" })
     await Promise.all(
       tokens.map(async (row) => {
         try {
-          const res = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
+          const res = await sendFcm(headers, {
               message: {
                 token: row.token,
                 notification: { title, body },
@@ -98,7 +124,6 @@ export const sendConversationPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -107,7 +132,6 @@ export const sendConversationPush = createServerFn({ method: "POST" })
                   },
                 },
               },
-            }),
           });
           if (res.status === 404 || res.status === 400) {
             const errorBody = await res.text();
@@ -177,10 +201,7 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
       .filter((r) => allowed.has(r.user_id))
       .map(async (row) => {
         try {
-          const res = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
+          const res = await sendFcm(headers, {
               message: {
                 token: row.token,
                 notification: {
@@ -192,7 +213,6 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -201,7 +221,6 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
                   },
                 },
               },
-            }),
           });
           if (res.status === 404 || res.status === 400) {
             const errorBody = await res.text();
@@ -255,10 +274,7 @@ export const sendTestPushToAll = createServerFn({ method: "POST" })
     await Promise.all(
       rows.map(async (row) => {
         try {
-          const res = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
+          const res = await sendFcm(headers, {
               message: {
                 token: row.token,
                 notification: {
@@ -270,7 +286,6 @@ export const sendTestPushToAll = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -279,7 +294,6 @@ export const sendTestPushToAll = createServerFn({ method: "POST" })
                   },
                 },
               },
-            }),
           });
           if (res.ok) {
             sent += 1;
@@ -361,10 +375,7 @@ export const sendStaffPush = createServerFn({ method: "POST" })
     await Promise.all(
       tokens.map(async (row) => {
         try {
-          const res = await fetch(`${GATEWAY_URL}/v1/projects/_/messages:send`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
+          const res = await sendFcm(headers, {
               message: {
                 token: row.token,
                 notification: { title, body },
@@ -373,7 +384,6 @@ export const sendStaffPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -382,7 +392,6 @@ export const sendStaffPush = createServerFn({ method: "POST" })
                   },
                 },
               },
-            }),
           });
           if (!res.ok) {
             const errorBody = await res.text();
