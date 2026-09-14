@@ -342,8 +342,9 @@ function AdminChat() {
             <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
               <Textarea
                 value={draft}
+                maxLength={4000}
                 onChange={(e) => {
-                  setDraft(e.target.value);
+                  setDraft(e.target.value.slice(0, 4000));
                   if (e.target.value.trim() && typingChannel.current && me?.userId) {
                     void typingChannel.current.send({
                       type: "broadcast",
