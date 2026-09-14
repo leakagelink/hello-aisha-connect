@@ -36,6 +36,10 @@ function AdminChat() {
   const [action, setAction] = useState("warning");
   const [reason, setReason] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const [memberTyping, setMemberTyping] = useState(false);
+  const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onlineUsers = useOnlineUsers(me?.userId);
 
   const conversation = useQuery({
     queryKey: ["admin-conversation", id],
