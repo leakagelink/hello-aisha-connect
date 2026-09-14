@@ -57,7 +57,11 @@ function isNativeAppOrigin(origin: string | null): boolean {
 const CORS_HEADERS = (origin: string) => ({
   "Access-Control-Allow-Origin": origin,
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "content-type,authorization,x-tsr-redirect",
+  // TanStack server functions always send x-tsr-serverfn and an Accept header.
+  // Both must be approved by the preflight or Android's WebView stops before
+  // the authenticated POST reaches the notification sender.
+  "Access-Control-Allow-Headers":
+    "accept,content-type,authorization,x-tsr-serverfn,x-tsr-redirect",
   "Access-Control-Max-Age": "86400",
   Vary: "Origin",
 });
