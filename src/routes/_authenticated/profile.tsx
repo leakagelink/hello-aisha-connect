@@ -255,6 +255,49 @@ function ProfilePage() {
               ) : null}
             </div>
           )}
+
+          <div className="px-1 pt-3">
+            <button
+              type="button"
+              onClick={() => setNotifHelpOpen((v) => !v)}
+              className="flex w-full items-center justify-between text-left text-sm font-medium text-primary"
+              aria-expanded={notifHelpOpen}
+            >
+              Notifications देर से आ रही हैं?
+              <ChevronRight
+                className={`size-4 transition-transform ${notifHelpOpen ? "rotate-90" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+            {notifHelpOpen && (
+              <div className="mt-2 space-y-2 rounded-2xl bg-muted/40 p-3 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">तेज़ notifications के लिए एक बार यह करें:</p>
+                <ol className="list-decimal space-y-1.5 pl-4">
+                  <li>
+                    <span className="font-medium text-foreground">Notifications चालू:</span> Settings →
+                    Apps → Hello Aisha → Notifications → Allow। फिर “Aisha messages” चैनल → Allow, Sound,
+                    Pop on screen, Lock-screen सभी ऑन करें।
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground">बैटरी प्रतिबंध हटाएँ (सबसे ज़रूरी):</span>{" "}
+                    Settings → Apps → Hello Aisha → Battery → Unrestricted / No restrictions। यही सबसे
+                    बड़ी वजह है देरी की।
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground">Autostart ऑन:</span> Xiaomi / Redmi,
+                    Oppo, Vivo, Realme में Settings → Apps → Hello Aisha → Autostart चालू करें।
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground">Power Saving बंद:</span> फ़ोन का Battery
+                    Saver / Power Saving मोड बंद रखें।
+                  </li>
+                </ol>
+                <p className="pt-1">
+                  यह सेटिंग फ़ोन पर है, ऐप में नहीं — एक बार करने के बाद notifications तुरंत आने लगेंगी।
+                </p>
+              </div>
+            )}
+          </div>
         </Group>
 
         <Group title="Account management">
