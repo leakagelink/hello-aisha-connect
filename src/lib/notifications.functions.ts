@@ -7,6 +7,9 @@ const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
 /** Android notification channel created on the native side. */
 const ANDROID_CHANNEL_ID = "hello_aisha_channel";
 
+/** Colour logo shown as the large image inside the expanded notification. */
+const NOTIFICATION_IMAGE_URL = "https://helloaisha.online/favicon.png";
+
 /**
  * Sends a real Firebase Cloud Messaging push notification to every registered
  * device for the conversation's member. Triggered when Aisha (staff) replies or
@@ -95,6 +98,7 @@ export const sendConversationPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
+                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -188,6 +192,7 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
+                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -265,6 +270,7 @@ export const sendTestPushToAll = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
+                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -367,6 +373,7 @@ export const sendStaffPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
+                    image: NOTIFICATION_IMAGE_URL,
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
