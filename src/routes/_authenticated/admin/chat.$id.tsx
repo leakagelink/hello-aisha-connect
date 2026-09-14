@@ -342,7 +342,16 @@ function AdminChat() {
             <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
               <Textarea
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  if (e.target.value.trim() && typingChannel.current && me?.userId) {
+                    void typingChannel.current.send({
+                      type: "broadcast",
+                      event: "typing",
+                      payload: { userId: me.userId },
+                    });
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
