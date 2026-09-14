@@ -425,7 +425,8 @@ function AdminChat() {
                 </Select>
                 <Textarea
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={300}
+                  onChange={(e) => setReason(e.target.value.slice(0, 300))}
                   placeholder="Reason (recorded in the moderation log)"
                   className="min-h-20 rounded-2xl bg-card"
                 />
