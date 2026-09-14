@@ -80,25 +80,45 @@ function AdminInbox() {
   const previews = useQuery({
     queryKey: ["admin-previews"],
     enabled: !!me?.isStaff,
-    refetchInterval: 10000,
+    refetchInterval: 5000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("conversation_id, content, created_at, is_read, sender_id")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (error) throw error;
+      // Page through every message so no conversation ever falls back to a stale
+      // timestamp (which would push a fresh message into the middle of the inbox).
+      const rows: {
+        conversation_id: string;
+        content: string;
+        created_at: string;
+        is_read: boolean;
+        sender_id: string | null;
+      }[] = [];
+      const pageSize = 1000;
+      for (let page = 0; page < 20; page += 1) {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("conversation_id, content, created_at, is_read, sender_id")
+          .order("created_at", { ascending: false })
+          .range(page * pageSize, page * pageSize + pageSize - 1);
+        if (error) throw error;
+        rows.push(...((data ?? []) as typeof rows));
+        if ((data?.length ?? 0) < pageSize) break;
+      }
       const map: Record<
         string,
         { content: string; created_at: string; unread: number; lastSenderId: string | null }
       > = {};
-      for (const m of data ?? []) {
+      for (const m of rows) {
         const entry = (map[m.conversation_id] ??= {
           content: m.content,
           created_at: m.created_at,
           unread: 0,
           lastSenderId: m.sender_id,
         });
+        // Keep the newest message as the preview even if page ordering shifts.
+        if (new Date(m.created_at).getTime() > new Date(entry.created_at).getTime()) {
+          entry.content = m.content;
+          entry.created_at = m.created_at;
+          entry.lastSenderId = m.sender_id;
+        }
         if (!m.is_read && m.sender_id !== me?.userId) entry.unread += 1;
       }
       return map;
