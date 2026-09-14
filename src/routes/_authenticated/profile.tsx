@@ -40,6 +40,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const [reportOpen, setReportOpen] = useState(false);
   const [pushStatus, setPushStatus] = useState<PushStatus | "idle">("idle");
+  const [notifHelpOpen, setNotifHelpOpen] = useState(false);
 
   const tokenCount = useQuery({
     queryKey: ["my-push-tokens", me?.userId ?? ""],
