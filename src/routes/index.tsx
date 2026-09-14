@@ -40,6 +40,19 @@ function Welcome() {
     if (!loading && session) navigate({ to: "/home", replace: true });
   }, [loading, session, navigate]);
 
+  // While the saved session is being restored — and for anyone already signed
+  // in — show a calm loading state instead of the welcome/Continue screens.
+  if (loading || session) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-soft-gradient px-5">
+        <div className="flex flex-col items-center gap-4">
+          <BrandMark className="size-12 animate-pulse" />
+          <span className="sr-only">Loading Hello Aisha</span>
+        </div>
+      </main>
+    );
+  }
+
   const toggleReason = (reason: string) =>
     setReasons((prev) =>
       prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason],
