@@ -204,15 +204,21 @@ function AdminInbox() {
     active: list.filter((c) => c.status === "active").length,
     closed: list.filter((c) => c.status === "closed" || c.status === "declined").length,
   };
-  const visible = list.filter((c) =>
-    filter === "all"
-      ? true
-      : filter === "new"
-        ? c.status === "requested"
-        : filter === "closed"
-          ? c.status === "closed" || c.status === "declined"
-          : c.status === filter,
-  );
+  const previewMap = previews.data ?? {};
+  const lastActivity = (c: Conversation) =>
+    new Date(previewMap[c.id]?.created_at ?? c.requested_at).getTime();
+  const visible = list
+    .filter((c) =>
+      filter === "all"
+        ? true
+        : filter === "new"
+          ? c.status === "requested"
+          : filter === "closed"
+            ? c.status === "closed" || c.status === "declined"
+            : c.status === filter,
+    )
+    // Newest activity first, so a fresh message jumps to the top of the inbox.
+    .sort((a, b) => lastActivity(b) - lastActivity(a));
   const totalUnread = Object.values(previews.data ?? {}).reduce((sum, p) => sum + p.unread, 0);
 
   if (!me) return <LoadingView />;

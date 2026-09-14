@@ -107,6 +107,27 @@ function AdminChat() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.data]);
 
+  // Opening the conversation marks the member's messages as read, so the
+  // unread badge in the inbox disappears once Aisha has seen them.
+  useEffect(() => {
+    const rows = messages.data;
+    if (!rows || !me?.userId) return;
+    const unreadIds = rows
+      .filter((m) => !m.is_read && m.sender_id !== me.userId)
+      .map((m) => m.id);
+    if (unreadIds.length === 0) return;
+    void (async () => {
+      const { error } = await supabase
+        .from("messages")
+        .update({ is_read: true } as never)
+        .in("id", unreadIds);
+      if (!error) {
+        queryClient.invalidateQueries({ queryKey: ["admin-messages", id] });
+        queryClient.invalidateQueries({ queryKey: ["admin-previews"] });
+      }
+    })();
+  }, [messages.data, me?.userId, id, queryClient]);
+
   const send = async () => {
     const content = draft.trim();
     if (!content || !me?.userId) return;
