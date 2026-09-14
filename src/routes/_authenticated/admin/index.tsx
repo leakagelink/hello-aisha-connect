@@ -301,8 +301,19 @@ function AdminInbox() {
                   onClick={() => navigate({ to: "/admin/chat/$id", params: { id: c.id } })}
                   className="flex w-full items-start gap-3 p-4 text-left"
                 >
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/12 text-base font-extrabold text-primary">
-                    {name.slice(0, 1).toUpperCase()}
+                  <span className="relative shrink-0">
+                    <span className="flex size-11 items-center justify-center rounded-full bg-primary/12 text-base font-extrabold text-primary">
+                      {name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card",
+                        isOnline(onlineUsers, c.user_id)
+                          ? "bg-emerald-500"
+                          : "bg-muted-foreground/40",
+                      )}
+                    />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between gap-2">
