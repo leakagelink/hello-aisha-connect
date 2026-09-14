@@ -323,6 +323,7 @@ function AdminInbox() {
                       </span>
                     </span>
                     <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {isOnline(onlineUsers, c.user_id) ? "Online" : "Offline"} ·{" "}
                       {c.topic ?? "No topic"} · {c.status}
                     </span>
                     <span className="mt-1 flex items-start justify-between gap-2">
