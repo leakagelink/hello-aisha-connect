@@ -343,9 +343,10 @@ function ChatPage() {
         <div className="mx-auto flex w-full max-w-md items-end gap-2">
           <Textarea
             value={draft}
-            onChange={(e) => onDraftChange(e.target.value)}
+            onChange={(e) => onDraftChange(e.target.value.slice(0, 4000))}
             placeholder={closed ? "This conversation is closed" : "Write a message…"}
             aria-label="Message"
+            maxLength={4000}
             disabled={!!closed}
             rows={1}
             className="max-h-32 min-h-12 flex-1 resize-none rounded-2xl"

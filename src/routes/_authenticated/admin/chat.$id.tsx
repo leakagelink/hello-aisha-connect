@@ -342,8 +342,9 @@ function AdminChat() {
             <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
               <Textarea
                 value={draft}
+                maxLength={4000}
                 onChange={(e) => {
-                  setDraft(e.target.value);
+                  setDraft(e.target.value.slice(0, 4000));
                   if (e.target.value.trim() && typingChannel.current && me?.userId) {
                     void typingChannel.current.send({
                       type: "broadcast",
@@ -382,7 +383,8 @@ function AdminChat() {
             </p>
             <Textarea
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              maxLength={2000}
+              onChange={(e) => setNote(e.target.value.slice(0, 2000))}
               placeholder="Add an internal note"
               className="min-h-24 rounded-2xl bg-card"
             />
@@ -423,7 +425,8 @@ function AdminChat() {
                 </Select>
                 <Textarea
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={300}
+                  onChange={(e) => setReason(e.target.value.slice(0, 300))}
                   placeholder="Reason (recorded in the moderation log)"
                   className="min-h-20 rounded-2xl bg-card"
                 />
