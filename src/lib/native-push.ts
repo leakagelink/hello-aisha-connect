@@ -160,9 +160,64 @@ export async function registerNativePush(userId: string): Promise<NativePushRegi
 }
 
 const PENDING_TOKEN_KEY = "hello-aisha-pending-push-token";
+/** The token this installation most recently registered, so a rotated token can replace it. */
+const ACTIVE_DEVICE_TOKEN_KEY = "hello-aisha-active-device-token";
 
 /** Last token successfully stored in this session, to avoid duplicate writes. */
 let lastSavedToken: { userId: string; token: string } | null = null;
+
+function getActiveDeviceToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACTIVE_DEVICE_TOKEN_KEY);
+}
+
+function setActiveDeviceToken(token: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(ACTIVE_DEVICE_TOKEN_KEY, token);
+}
+
+function clearActiveDeviceToken(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(ACTIVE_DEVICE_TOKEN_KEY);
+}
+
+/**
+ * Removes a previous device token for this account when FCM rotates it, so the
+ * server never keeps sending to a stale token after an app update or reinstall.
+ */
+async function forgetStaleDeviceToken(userId: string, token: string): Promise<void> {
+  const previous = getActiveDeviceToken();
+  if (!previous || previous === token) return;
+  try {
+    await supabase
+      .from("push_tokens")
+      .delete()
+      .eq("user_id", userId)
+      .eq("token", previous);
+  } catch {
+    /* best-effort cleanup; the server also prunes on UNREGISTERED */
+  }
+}
+
+/**
+ * Deletes every token row this installation saved, used when the user has
+ * revoked notification permission so the server stops targeting a dead device.
+ */
+async function pruneThisDeviceTokens(userId: string): Promise<void> {
+  const previous = getActiveDeviceToken();
+  if (!previous) return;
+  try {
+    await supabase
+      .from("push_tokens")
+      .delete()
+      .eq("user_id", userId)
+      .eq("token", previous);
+  } catch {
+    /* best-effort */
+  }
+  clearActiveDeviceToken();
+  lastSavedToken = null;
+}
 
 /** Saves a device token for this account; remembers it if saving fails. */
 export async function saveNativeToken(userId: string, token: string): Promise<boolean> {
@@ -170,6 +225,10 @@ export async function saveNativeToken(userId: string, token: string): Promise<bo
   if (lastSavedToken && lastSavedToken.userId === userId && lastSavedToken.token === token) {
     return true;
   }
+  // If FCM rotated the token, drop the old row before saving the new one so
+  // the server always targets this device's live token.
+  await forgetStaleDeviceToken(userId, token);
+
   const { error } = await supabase.from("push_tokens").upsert(
     { user_id: userId, token, platform: Capacitor.getPlatform() },
     { onConflict: "user_id,token" },
@@ -181,6 +240,8 @@ export async function saveNativeToken(userId: string, token: string): Promise<bo
     return false;
   }
   rememberPushError(undefined);
+  setActiveDeviceToken(token);
+  lastSavedToken = { userId, token };
   if (typeof window !== "undefined") window.localStorage.removeItem(PENDING_TOKEN_KEY);
   return true;
 }
@@ -227,7 +288,14 @@ export function startNativeTokenSync(userId: string): () => void {
 
       const registerIfAllowed = async () => {
         const state = await PushNotifications.checkPermissions();
-        if (state.receive === "granted") await PushNotifications.register();
+        if (state.receive === "granted") {
+          await PushNotifications.register();
+        } else if (state.receive === "denied") {
+          // The user revoked notification permission from system settings.
+          // Drop this device's token so the server stops targeting a device
+          // that will silently drop every push.
+          await pruneThisDeviceTokens(userId);
+        }
       };
       await registerIfAllowed();
 
