@@ -47,6 +47,7 @@ function ChatPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onlineUsers = useOnlineUsers(me?.userId);
 
   const conversation = useQuery({
     queryKey: ["conversation", id],
