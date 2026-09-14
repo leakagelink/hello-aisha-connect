@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatTime, logEvent } from "@/lib/aisha";
 import { sendStaffPush } from "@/lib/notifications.functions";
 import { useProfile } from "@/hooks/useAppData";
+import { useOnlineUsers, isOnline } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/chat/$id")({
