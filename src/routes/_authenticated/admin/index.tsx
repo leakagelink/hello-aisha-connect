@@ -12,6 +12,7 @@ import { LoadingView, ErrorView, EmptyView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { formatWhen, logEvent } from "@/lib/aisha";
+import { useOnlineUsers, isOnline } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -46,6 +47,7 @@ function AdminInbox() {
   const [replyFor, setReplyFor] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const onlineUsers = useOnlineUsers(me?.userId);
 
   useEffect(() => {
     if (me && !me.isStaff) navigate({ to: "/home", replace: true });
@@ -86,12 +88,16 @@ function AdminInbox() {
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      const map: Record<string, { content: string; created_at: string; unread: number }> = {};
+      const map: Record<
+        string,
+        { content: string; created_at: string; unread: number; lastSenderId: string | null }
+      > = {};
       for (const m of data ?? []) {
         const entry = (map[m.conversation_id] ??= {
           content: m.content,
           created_at: m.created_at,
           unread: 0,
+          lastSenderId: m.sender_id,
         });
         if (!m.is_read && m.sender_id !== me?.userId) entry.unread += 1;
       }
@@ -197,26 +203,40 @@ function AdminInbox() {
   };
 
   const list = conversations.data ?? [];
-  const counts = {
-    all: list.length,
-    new: list.filter((c) => c.status === "requested").length,
-    waiting: list.filter((c) => c.status === "waiting").length,
-    active: list.filter((c) => c.status === "active").length,
-    closed: list.filter((c) => c.status === "closed" || c.status === "declined").length,
-  };
   const previewMap = previews.data ?? {};
   const lastActivity = (c: Conversation) =>
     new Date(previewMap[c.id]?.created_at ?? c.requested_at).getTime();
+  const isClosed = (c: Conversation) => c.status === "closed" || c.status === "declined";
+  // "Waiting" = open conversation where the member spoke last, so Aisha still
+  // owes a reply. "Active" = open conversation where Aisha replied last.
+  const awaitingAisha = (c: Conversation) => {
+    const preview = previewMap[c.id];
+    if (!preview) return true;
+    return preview.lastSenderId !== me?.userId;
+  };
+  const matches = (c: Conversation, key: FilterKey) => {
+    switch (key) {
+      case "all":
+        return true;
+      case "new":
+        return c.status === "requested" || c.status === "waiting";
+      case "closed":
+        return isClosed(c);
+      case "waiting":
+        return !isClosed(c) && c.status !== "requested" && awaitingAisha(c);
+      case "active":
+        return !isClosed(c) && c.status !== "requested" && !awaitingAisha(c);
+    }
+  };
+  const counts = {
+    all: list.length,
+    new: list.filter((c) => matches(c, "new")).length,
+    waiting: list.filter((c) => matches(c, "waiting")).length,
+    active: list.filter((c) => matches(c, "active")).length,
+    closed: list.filter((c) => matches(c, "closed")).length,
+  };
   const visible = list
-    .filter((c) =>
-      filter === "all"
-        ? true
-        : filter === "new"
-          ? c.status === "requested"
-          : filter === "closed"
-            ? c.status === "closed" || c.status === "declined"
-            : c.status === filter,
-    )
+    .filter((c) => matches(c, filter))
     // Newest activity first, so a fresh message jumps to the top of the inbox.
     .sort((a, b) => lastActivity(b) - lastActivity(a));
   const totalUnread = Object.values(previews.data ?? {}).reduce((sum, p) => sum + p.unread, 0);
@@ -281,8 +301,19 @@ function AdminInbox() {
                   onClick={() => navigate({ to: "/admin/chat/$id", params: { id: c.id } })}
                   className="flex w-full items-start gap-3 p-4 text-left"
                 >
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/12 text-base font-extrabold text-primary">
-                    {name.slice(0, 1).toUpperCase()}
+                  <span className="relative shrink-0">
+                    <span className="flex size-11 items-center justify-center rounded-full bg-primary/12 text-base font-extrabold text-primary">
+                      {name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card",
+                        isOnline(onlineUsers, c.user_id)
+                          ? "bg-emerald-500"
+                          : "bg-muted-foreground/40",
+                      )}
+                    />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between gap-2">
@@ -292,6 +323,7 @@ function AdminInbox() {
                       </span>
                     </span>
                     <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {isOnline(onlineUsers, c.user_id) ? "Online" : "Offline"} ·{" "}
                       {c.topic ?? "No topic"} · {c.status}
                     </span>
                     <span className="mt-1 flex items-start justify-between gap-2">

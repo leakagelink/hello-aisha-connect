@@ -19,6 +19,7 @@ import { LoadingView, ErrorView } from "@/components/StateViews";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useAppData";
 import { formatTime, formatWhen, logEvent } from "@/lib/aisha";
+import { useOnlineUsers, isOnline } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/chat/$id")({
@@ -35,6 +36,10 @@ function AdminChat() {
   const [action, setAction] = useState("warning");
   const [reason, setReason] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const [memberTyping, setMemberTyping] = useState(false);
+  const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onlineUsers = useOnlineUsers(me?.userId);
 
   const conversation = useQuery({
     queryKey: ["admin-conversation", id],
@@ -102,6 +107,27 @@ function AdminChat() {
       supabase.removeChannel(channel);
     };
   }, [id, queryClient]);
+
+  // Same typing channel the member uses, so each side sees the other typing.
+  useEffect(() => {
+    if (!me?.userId) return;
+    const channel = supabase.channel(`typing-${id}`, { config: { broadcast: { self: false } } });
+    channel
+      .on("broadcast", { event: "typing" }, (message) => {
+        const body = message["payload"] as { userId?: string } | undefined;
+        if (body?.userId === me.userId) return;
+        setMemberTyping(true);
+        if (typingTimeout.current) clearTimeout(typingTimeout.current);
+        typingTimeout.current = setTimeout(() => setMemberTyping(false), 3000);
+      })
+      .subscribe();
+    typingChannel.current = channel;
+    return () => {
+      supabase.removeChannel(channel);
+      typingChannel.current = null;
+    };
+  }, [id, me?.userId]);
+
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -242,8 +268,24 @@ function AdminChat() {
           </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold">{member.data?.username ?? "Member"}</p>
-            <p className="text-xs text-muted-foreground">
-              {conversation.data?.status} · {conversation.data?.topic ?? "No topic"}
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-2 shrink-0 rounded-full",
+                  isOnline(onlineUsers, conversation.data?.user_id)
+                    ? "bg-emerald-500"
+                    : "bg-muted-foreground/40",
+                )}
+              />
+              <span className="truncate">
+                {memberTyping
+                  ? "Typing…"
+                  : isOnline(onlineUsers, conversation.data?.user_id)
+                    ? "Online"
+                    : "Offline"}{" "}
+                · {conversation.data?.status} · {conversation.data?.topic ?? "No topic"}
+              </span>
             </p>
           </div>
           <Button variant="outline" className="min-h-11 rounded-full" onClick={close}>
@@ -290,12 +332,26 @@ function AdminChat() {
                   </li>
                 );
               })}
+              {memberTyping ? (
+                <li className="text-xs text-muted-foreground">
+                  {member.data?.username ?? "Member"} is typing…
+                </li>
+              ) : null}
             </ul>
             <div ref={endRef} />
             <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
               <Textarea
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  if (e.target.value.trim() && typingChannel.current && me?.userId) {
+                    void typingChannel.current.send({
+                      type: "broadcast",
+                      event: "typing",
+                      payload: { userId: me.userId },
+                    });
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();

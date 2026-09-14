@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatTime, logEvent } from "@/lib/aisha";
 import { sendStaffPush } from "@/lib/notifications.functions";
 import { useProfile } from "@/hooks/useAppData";
+import { useOnlineUsers, isOnline } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/chat/$id")({
@@ -46,6 +47,7 @@ function ChatPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onlineUsers = useOnlineUsers(me?.userId);
 
   const conversation = useQuery({
     queryKey: ["conversation", id],
@@ -227,7 +229,22 @@ function ChatPage() {
                 <ShieldCheck className="size-2.5" aria-hidden="true" /> Real person
               </span>
             </div>
-            <p className="truncate text-xs text-muted-foreground">Friendly conversation</p>
+            <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-2 shrink-0 rounded-full",
+                  isOnline(onlineUsers, conversation.data?.listener_id)
+                    ? "bg-emerald-500"
+                    : "bg-muted-foreground/40",
+                )}
+              />
+              {otherTyping
+                ? "Typing…"
+                : isOnline(onlineUsers, conversation.data?.listener_id)
+                  ? "Online"
+                  : "Offline"}
+            </p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
