@@ -332,6 +332,11 @@ function AdminChat() {
                   </li>
                 );
               })}
+              {memberTyping ? (
+                <li className="text-xs text-muted-foreground">
+                  {member.data?.username ?? "Member"} is typing…
+                </li>
+              ) : null}
             </ul>
             <div ref={endRef} />
             <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
