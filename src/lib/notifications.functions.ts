@@ -95,7 +95,6 @@ export const sendConversationPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    icon: "ic_stat_notify",
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -189,7 +188,6 @@ export const sendAvailabilityPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    icon: "ic_stat_notify",
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -267,7 +265,6 @@ export const sendTestPushToAll = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    icon: "ic_stat_notify",
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
@@ -370,7 +367,6 @@ export const sendStaffPush = createServerFn({ method: "POST" })
                   priority: "HIGH",
                   notification: {
                     channel_id: ANDROID_CHANNEL_ID,
-                    icon: "ic_stat_notify",
                     sound: "default",
                     visibility: "PUBLIC",
                     default_sound: true,
