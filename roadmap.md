@@ -5,6 +5,7 @@
 - [ ] Publish the project so helloaisha.online serves the app
 
 ## Done
+- [x] Make Android push delivery fast and reliable by removing network-dependent notification images and retrying temporary delivery failures
 - [x] Grant secure device-token access and wire the Android Google Services plugin during sync
 - [x] Connect Firebase Cloud Messaging in the new workspace
 - [x] Add native Android FCM registration, verified token storage, and automatic Firebase config sync
