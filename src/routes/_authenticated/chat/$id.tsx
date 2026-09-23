@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, MoreVertical, Send, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, MoreVertical, Send, ShieldCheck, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,10 +14,15 @@ import {
 import { AishaAvatar } from "@/components/AisArt";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { ReportDialog } from "@/components/ReportDialog";
+import { EmojiPicker } from "@/components/EmojiPicker";
+import { ChatMedia } from "@/components/ChatMedia";
+import { MediaUnlockDialog } from "@/components/MediaUnlockDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTime, logEvent } from "@/lib/aisha";
 import { sendStaffPush } from "@/lib/notifications.functions";
 import { useProfile } from "@/hooks/useAppData";
+import { useMediaAccess, timeLeftLabel, type MediaFeature } from "@/lib/media-access";
+import { uploadChatMedia } from "@/lib/chat-media";
 import { useOnlineUsers, isOnline } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +38,8 @@ type MessageRow = {
   content: string;
   is_read: boolean;
   created_at: string;
+  media_kind?: string | null;
+  media_path?: string | null;
 };
 
 function ChatPage() {
@@ -44,10 +51,14 @@ function ChatPage() {
   const [sending, setSending] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
+  const [unlockFeature, setUnlockFeature] = useState<MediaFeature | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const videoInput = useRef<HTMLInputElement>(null);
   const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onlineUsers = useOnlineUsers(me?.userId);
+  const access = useMediaAccess().data;
 
   const conversation = useQuery({
     queryKey: ["conversation", id],
