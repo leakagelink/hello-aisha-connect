@@ -80,3 +80,25 @@ providers' backups.
 - Run the full account-deletion flow once on a throwaway account and confirm the
   account can no longer sign in.
 - Confirm the reviewer test account can sign in and start a conversation.
+
+## Ads (AdMob rewarded) — added with the media unlock feature
+
+Code-level (done in the app):
+- Rewarded ads only. No banners, no interstitials, no subscriptions, no payments.
+- Every ad is user-initiated: the reward, the number of ads and the unlock duration are shown before the Watch ad button; ads are never auto-started or chained.
+- Reward is granted only after AdMob's official reward callback, confirmed server-side; failed, skipped or dismissed ads grant nothing and consume no allowance.
+- Reward processing is idempotent (one ad session id = one reward) and the 10-ads-per-day limit is enforced in the database with server time.
+- Text chat is never gated by an ad. Locked media never blocks a conversation.
+- Admin accounts have permanent media access by database role and see no ad or unlock UI.
+- Test ad unit ids are used in development/preview builds; production ad unit ids only in production builds. AdMob app id is declared in AndroidManifest.xml.
+
+Play Console / manual work still required by you:
+- Data Safety: declare advertising-related collection for the Google Mobile Ads SDK (device or other IDs, app activity/ad interaction, approximate location from IP as applicable).
+- Answer the "Does your app contain ads?" question as Yes; the store listing must show the Contains ads label.
+- Link the AdMob app to the Play listing and confirm the ad content rating.
+- Confirm the updated Privacy Policy URL is live before submitting.
+
+Real-world verification (device):
+- Watch a rewarded ad end to end and confirm the unlock timer starts only after completion.
+- Close an ad early and confirm nothing unlocks and the daily counter does not move.
+- Confirm the daily limit message appears after 10 completed ads and resets the next day.
