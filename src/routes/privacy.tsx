@@ -163,6 +163,7 @@ function PrivacyPage() {
           advertising identifier or opt out of ad personalisation in your Android settings, and you
           can simply choose never to watch an ad.
         </p>
+      </Section>
 
 
       <Section heading="Safety and moderation">
