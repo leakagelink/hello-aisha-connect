@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, Send, Video } from "lucide-react";
+import { EmojiPicker } from "@/components/EmojiPicker";
+import { ChatMedia } from "@/components/ChatMedia";
+import { uploadChatMedia } from "@/lib/chat-media";
 import { sendConversationPush } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +37,9 @@ function AdminChat() {
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const [action, setAction] = useState("warning");
+  const [uploading, setUploading] = useState(false);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const videoInput = useRef<HTMLInputElement>(null);
   const [reason, setReason] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const [memberTyping, setMemberTyping] = useState(false);
@@ -362,7 +368,13 @@ function AdminChat() {
                           Hello Aisha · Welcome message
                         </p>
                       ) : null}
-                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      {m.media_kind === "image" || m.media_kind === "video" ? (
+                        <ChatMedia path={m.media_path ?? ""} kind={m.media_kind} />
+                      ) : m.media_kind === "emoji" ? (
+                        <p className="text-3xl leading-tight">{m.content}</p>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      )}
                       <p className="mt-1 text-[10px] opacity-70">
                         {formatTime(m.created_at)}
                         {m.moderation_status !== "allowed" ? ` · ${m.moderation_status}` : ""}
@@ -378,7 +390,50 @@ function AdminChat() {
               ) : null}
             </ul>
             <div ref={endRef} />
-            <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
+            <div className="sticky bottom-0 mt-4 flex items-end gap-1 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
+              <EmojiPicker onSelect={(emoji) => void sendEmoji(emoji)} disabled={uploading} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Send a photo"
+                disabled={uploading}
+                className="size-11 shrink-0 rounded-full text-muted-foreground"
+                onClick={() => imageInput.current?.click()}
+              >
+                <ImageIcon className="size-5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Send a video"
+                disabled={uploading}
+                className="size-11 shrink-0 rounded-full text-muted-foreground"
+                onClick={() => videoInput.current?.click()}
+              >
+                <Video className="size-5" />
+              </Button>
+              <input
+                ref={imageInput}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  void sendMedia("image", e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={videoInput}
+                type="file"
+                accept="video/*"
+                hidden
+                onChange={(e) => {
+                  void sendMedia("video", e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
               <Textarea
                 value={draft}
                 maxLength={4000}
