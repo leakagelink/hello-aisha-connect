@@ -129,12 +129,42 @@ function PrivacyPage() {
             <strong>Google Firebase Cloud Messaging</strong> — delivers push notifications to your
             device.
           </li>
+          <li>
+            <strong>Google AdMob</strong> — shows the optional rewarded ads described below, in the
+            Android app only.
+          </li>
         </ul>
         <p>
-          We do not sell your personal data and we do not share it with advertisers or data brokers.
-          We may disclose data where the law requires it or to protect someone's safety.
+          We do not sell your personal data and we do not share your messages, check-ins or reports
+          with advertisers or data brokers. We may disclose data where the law requires it or to
+          protect someone's safety.
         </p>
       </Section>
+
+      <Section heading="Optional rewarded ads">
+        <p>
+          Text conversations with Aisha are always free and never require watching an ad. In the
+          Android app you may choose to watch a rewarded ad to unlock emoji, photo or video sharing
+          for a limited time. Ads are only ever shown after you tap the Watch ad button, and the
+          reward is only an in-app feature unlock — never money, credit or anything transferable.
+        </p>
+        <p>
+          Rewarded ads are served by Google AdMob. When an ad is shown, the Google Mobile Ads SDK
+          may collect and process advertising and device information — such as your advertising
+          identifier, approximate location derived from your IP address, device and app details, and
+          ad interaction data — to serve and measure ads and to prevent fraud. This processing is
+          governed by Google's own privacy terms. Your conversations, check-ins, reports and profile
+          are never shared with the ad provider.
+        </p>
+        <p>
+          On our side we store only the records needed to run the unlocks fairly: which feature you
+          unlocked, when it expires, how many rewarded ads you completed today, and an identifier
+          for each ad session so a single ad can never be counted twice. You can reset your
+          advertising identifier or opt out of ad personalisation in your Android settings, and you
+          can simply choose never to watch an ad.
+        </p>
+      </Section>
+
 
       <Section heading="Safety and moderation">
         <p>

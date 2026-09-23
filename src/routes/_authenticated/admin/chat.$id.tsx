@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, Send, Video } from "lucide-react";
+import { EmojiPicker } from "@/components/EmojiPicker";
+import { ChatMedia } from "@/components/ChatMedia";
+import { uploadChatMedia } from "@/lib/chat-media";
 import { sendConversationPush } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +37,9 @@ function AdminChat() {
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const [action, setAction] = useState("warning");
+  const [uploading, setUploading] = useState(false);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const videoInput = useRef<HTMLInputElement>(null);
   const [reason, setReason] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const [memberTyping, setMemberTyping] = useState(false);
@@ -189,7 +195,46 @@ function AdminChat() {
     queryClient.invalidateQueries({ queryKey: ["admin-conversation", id] });
   };
 
+  // Admin accounts have permanent full media access (verified server-side by role).
+  const sendEmoji = async (emoji: string) => {
+    if (!me?.userId) return;
+    const { error } = await supabase
+      .from("messages")
+      .insert({ conversation_id: id, sender_id: me.userId, content: emoji, media_kind: "emoji" });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await sendPush({ data: { conversationId: id, type: "reply", content: emoji } });
+    queryClient.invalidateQueries({ queryKey: ["admin-messages", id] });
+  };
+
+  const sendMedia = async (kind: "image" | "video", file: File | undefined) => {
+    if (!file || !me?.userId) return;
+    setUploading(true);
+    try {
+      const { path, mime } = await uploadChatMedia(id, me.userId, kind, file);
+      const label = kind === "image" ? "Photo" : "Video";
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: id,
+        sender_id: me.userId,
+        content: label,
+        media_kind: kind,
+        media_path: path,
+        media_mime: mime,
+      });
+      if (error) throw new Error(error.message);
+      await sendPush({ data: { conversationId: id, type: "reply", content: label } });
+      queryClient.invalidateQueries({ queryKey: ["admin-messages", id] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "That attachment didn't send.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const close = async () => {
+
     const { error } = await supabase
       .from("conversations")
       .update({ status: "closed", closed_at: new Date().toISOString() })
@@ -323,7 +368,13 @@ function AdminChat() {
                           Hello Aisha · Welcome message
                         </p>
                       ) : null}
-                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      {m.media_kind === "image" || m.media_kind === "video" ? (
+                        <ChatMedia path={m.media_path ?? ""} kind={m.media_kind} />
+                      ) : m.media_kind === "emoji" ? (
+                        <p className="text-3xl leading-tight">{m.content}</p>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      )}
                       <p className="mt-1 text-[10px] opacity-70">
                         {formatTime(m.created_at)}
                         {m.moderation_status !== "allowed" ? ` · ${m.moderation_status}` : ""}
@@ -339,7 +390,50 @@ function AdminChat() {
               ) : null}
             </ul>
             <div ref={endRef} />
-            <div className="sticky bottom-0 mt-4 flex items-end gap-2 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
+            <div className="sticky bottom-0 mt-4 flex items-end gap-1 border-t border-border/60 bg-card/95 py-3 backdrop-blur">
+              <EmojiPicker onSelect={(emoji) => void sendEmoji(emoji)} disabled={uploading} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Send a photo"
+                disabled={uploading}
+                className="size-11 shrink-0 rounded-full text-muted-foreground"
+                onClick={() => imageInput.current?.click()}
+              >
+                <ImageIcon className="size-5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Send a video"
+                disabled={uploading}
+                className="size-11 shrink-0 rounded-full text-muted-foreground"
+                onClick={() => videoInput.current?.click()}
+              >
+                <Video className="size-5" />
+              </Button>
+              <input
+                ref={imageInput}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  void sendMedia("image", e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={videoInput}
+                type="file"
+                accept="video/*"
+                hidden
+                onChange={(e) => {
+                  void sendMedia("video", e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
               <Textarea
                 value={draft}
                 maxLength={4000}

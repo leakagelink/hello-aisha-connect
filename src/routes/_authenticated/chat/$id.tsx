@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, MoreVertical, Send, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, MoreVertical, Send, ShieldCheck, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,10 +14,15 @@ import {
 import { AishaAvatar } from "@/components/AisArt";
 import { LoadingView, ErrorView } from "@/components/StateViews";
 import { ReportDialog } from "@/components/ReportDialog";
+import { EmojiPicker } from "@/components/EmojiPicker";
+import { ChatMedia } from "@/components/ChatMedia";
+import { MediaUnlockDialog } from "@/components/MediaUnlockDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTime, logEvent } from "@/lib/aisha";
 import { sendStaffPush } from "@/lib/notifications.functions";
 import { useProfile } from "@/hooks/useAppData";
+import { useMediaAccess, timeLeftLabel, type MediaFeature } from "@/lib/media-access";
+import { uploadChatMedia } from "@/lib/chat-media";
 import { useOnlineUsers, isOnline } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +38,8 @@ type MessageRow = {
   content: string;
   is_read: boolean;
   created_at: string;
+  media_kind?: string | null;
+  media_path?: string | null;
 };
 
 function ChatPage() {
@@ -44,10 +51,14 @@ function ChatPage() {
   const [sending, setSending] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
+  const [unlockFeature, setUnlockFeature] = useState<MediaFeature | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const videoInput = useRef<HTMLInputElement>(null);
   const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onlineUsers = useOnlineUsers(me?.userId);
+  const access = useMediaAccess().data;
 
   const conversation = useQuery({
     queryKey: ["conversation", id],
@@ -185,7 +196,78 @@ function ChatPage() {
     }
   };
 
+  const canUse = (feature: MediaFeature) =>
+    !!access && (access.is_admin || access.features[feature].unlocked);
+
+  const sendEmoji = async (emoji: string) => {
+    if (!me?.userId || closed) return;
+    if (!canUse("emoji")) {
+      setUnlockFeature("emoji");
+      return;
+    }
+    const { error } = await supabase
+      .from("messages")
+      .insert({ conversation_id: id, sender_id: me.userId, content: emoji, media_kind: "emoji" });
+    if (error) {
+      toast(
+        error.message.includes("MEDIA_LOCKED")
+          ? "Emoji sharing isn't unlocked right now."
+          : "That message didn't send.",
+      );
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["messages", id] });
+    try {
+      await sendStaffPush({ data: { conversationId: id, type: "message", content: emoji } });
+    } catch (pushErr) {
+      console.error("Staff push failed:", pushErr);
+    }
+  };
+
+  const pickMedia = (kind: "image" | "video") => {
+    if (!canUse(kind)) {
+      setUnlockFeature(kind);
+      return;
+    }
+    (kind === "image" ? imageInput : videoInput).current?.click();
+  };
+
+  const sendMedia = async (kind: "image" | "video", file: File | undefined) => {
+    if (!file || !me?.userId) return;
+    setSending(true);
+    try {
+      const { path, mime } = await uploadChatMedia(id, me.userId, kind, file);
+      const label = kind === "image" ? "Photo" : "Video";
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: id,
+        sender_id: me.userId,
+        content: label,
+        media_kind: kind,
+        media_path: path,
+        media_mime: mime,
+      });
+      if (error) {
+        throw new Error(
+          error.message.includes("MEDIA_LOCKED")
+            ? `${label} sharing isn't unlocked right now.`
+            : "That attachment didn't send.",
+        );
+      }
+      await queryClient.invalidateQueries({ queryKey: ["messages", id] });
+      try {
+        await sendStaffPush({ data: { conversationId: id, type: "message", content: label } });
+      } catch (pushErr) {
+        console.error("Staff push failed:", pushErr);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "That attachment didn't send.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const blockConversation = async () => {
+
     const { error } = await supabase
       .from("conversations")
       .update({ blocked_by_user: true, status: "closed", closed_at: new Date().toISOString() })
@@ -316,7 +398,13 @@ function ChatPage() {
                           : "rounded-bl-lg bg-card text-card-foreground",
                       )}
                     >
-                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      {m.media_kind === "image" || m.media_kind === "video" ? (
+                        <ChatMedia path={m.media_path ?? ""} kind={m.media_kind} />
+                      ) : m.media_kind === "emoji" ? (
+                        <p className="text-3xl leading-tight">{m.content}</p>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      )}
                       <p
                         className={cn(
                           "mt-1 text-[10px]",
@@ -340,7 +428,30 @@ function ChatPage() {
       </div>
 
       <div className="sticky bottom-0 border-t border-border bg-card/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-md items-end gap-2">
+        <div className="mx-auto flex w-full max-w-md items-end gap-1">
+          <EmojiPicker onSelect={(emoji) => void sendEmoji(emoji)} disabled={!!closed || sending} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={canUse("image") ? "Send a photo" : "Photo sharing is locked"}
+            disabled={!!closed || sending}
+            className="size-11 shrink-0 rounded-full text-muted-foreground"
+            onClick={() => pickMedia("image")}
+          >
+            <ImageIcon className="size-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={canUse("video") ? "Send a video" : "Video sharing is locked"}
+            disabled={!!closed || sending}
+            className="size-11 shrink-0 rounded-full text-muted-foreground"
+            onClick={() => pickMedia("video")}
+          >
+            <Video className="size-5" />
+          </Button>
           <Textarea
             value={draft}
             onChange={(e) => onDraftChange(e.target.value.slice(0, 4000))}
@@ -367,12 +478,53 @@ function ChatPage() {
             <Send className="size-5" />
           </Button>
         </div>
-        <p className="mx-auto mt-2 max-w-md text-center text-[10px] text-muted-foreground">
-          Text only. Peer support, not therapy or emergency help.
+
+        <input
+          ref={imageInput}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            void sendMedia("image", e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+        <input
+          ref={videoInput}
+          type="file"
+          accept="video/*"
+          hidden
+          onChange={(e) => {
+            void sendMedia("video", e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+
+        {access && !access.is_admin ? (
+          <p className="mx-auto mt-2 max-w-md text-center text-[10px] text-muted-foreground">
+            {(["emoji", "image", "video"] as MediaFeature[])
+              .map((feature) =>
+                access.features[feature].unlocked
+                  ? `${feature === "emoji" ? "Emoji" : feature === "image" ? "Photos" : "Videos"}: ${timeLeftLabel(access.features[feature].expires_at)}`
+                  : `${feature === "emoji" ? "Emoji" : feature === "image" ? "Photos" : "Videos"}: locked`,
+              )
+              .join(" · ")}
+          </p>
+        ) : null}
+
+        <p className="mx-auto mt-1 max-w-md text-center text-[10px] text-muted-foreground">
+          Peer support, not therapy or emergency help.
         </p>
       </div>
 
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} conversationId={id} />
+      <MediaUnlockDialog
+        open={unlockFeature !== null}
+        onOpenChange={(open) => setUnlockFeature(open ? unlockFeature : null)}
+        access={access}
+        feature={unlockFeature ?? "emoji"}
+      />
     </main>
   );
 }
+
