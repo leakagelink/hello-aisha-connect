@@ -189,7 +189,46 @@ function AdminChat() {
     queryClient.invalidateQueries({ queryKey: ["admin-conversation", id] });
   };
 
+  // Admin accounts have permanent full media access (verified server-side by role).
+  const sendEmoji = async (emoji: string) => {
+    if (!me?.userId) return;
+    const { error } = await supabase
+      .from("messages")
+      .insert({ conversation_id: id, sender_id: me.userId, content: emoji, media_kind: "emoji" });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await sendPush({ data: { conversationId: id, type: "reply", content: emoji } });
+    queryClient.invalidateQueries({ queryKey: ["admin-messages", id] });
+  };
+
+  const sendMedia = async (kind: "image" | "video", file: File | undefined) => {
+    if (!file || !me?.userId) return;
+    setUploading(true);
+    try {
+      const { path, mime } = await uploadChatMedia(id, me.userId, kind, file);
+      const label = kind === "image" ? "Photo" : "Video";
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: id,
+        sender_id: me.userId,
+        content: label,
+        media_kind: kind,
+        media_path: path,
+        media_mime: mime,
+      });
+      if (error) throw new Error(error.message);
+      await sendPush({ data: { conversationId: id, type: "reply", content: label } });
+      queryClient.invalidateQueries({ queryKey: ["admin-messages", id] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "That attachment didn't send.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const close = async () => {
+
     const { error } = await supabase
       .from("conversations")
       .update({ status: "closed", closed_at: new Date().toISOString() })
