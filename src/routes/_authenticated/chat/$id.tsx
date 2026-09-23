@@ -196,7 +196,78 @@ function ChatPage() {
     }
   };
 
+  const canUse = (feature: MediaFeature) =>
+    !!access && (access.is_admin || access.features[feature].unlocked);
+
+  const sendEmoji = async (emoji: string) => {
+    if (!me?.userId || closed) return;
+    if (!canUse("emoji")) {
+      setUnlockFeature("emoji");
+      return;
+    }
+    const { error } = await supabase
+      .from("messages")
+      .insert({ conversation_id: id, sender_id: me.userId, content: emoji, media_kind: "emoji" });
+    if (error) {
+      toast(
+        error.message.includes("MEDIA_LOCKED")
+          ? "Emoji sharing isn't unlocked right now."
+          : "That message didn't send.",
+      );
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["messages", id] });
+    try {
+      await sendStaffPush({ data: { conversationId: id, type: "message", content: emoji } });
+    } catch (pushErr) {
+      console.error("Staff push failed:", pushErr);
+    }
+  };
+
+  const pickMedia = (kind: "image" | "video") => {
+    if (!canUse(kind)) {
+      setUnlockFeature(kind);
+      return;
+    }
+    (kind === "image" ? imageInput : videoInput).current?.click();
+  };
+
+  const sendMedia = async (kind: "image" | "video", file: File | undefined) => {
+    if (!file || !me?.userId) return;
+    setSending(true);
+    try {
+      const { path, mime } = await uploadChatMedia(id, me.userId, kind, file);
+      const label = kind === "image" ? "Photo" : "Video";
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: id,
+        sender_id: me.userId,
+        content: label,
+        media_kind: kind,
+        media_path: path,
+        media_mime: mime,
+      });
+      if (error) {
+        throw new Error(
+          error.message.includes("MEDIA_LOCKED")
+            ? `${label} sharing isn't unlocked right now.`
+            : "That attachment didn't send.",
+        );
+      }
+      await queryClient.invalidateQueries({ queryKey: ["messages", id] });
+      try {
+        await sendStaffPush({ data: { conversationId: id, type: "message", content: label } });
+      } catch (pushErr) {
+        console.error("Staff push failed:", pushErr);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "That attachment didn't send.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const blockConversation = async () => {
+
     const { error } = await supabase
       .from("conversations")
       .update({ blocked_by_user: true, status: "closed", closed_at: new Date().toISOString() })
