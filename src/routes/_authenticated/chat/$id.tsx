@@ -398,7 +398,13 @@ function ChatPage() {
                           : "rounded-bl-lg bg-card text-card-foreground",
                       )}
                     >
-                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      {m.media_kind === "image" || m.media_kind === "video" ? (
+                        <ChatMedia path={m.media_path ?? ""} kind={m.media_kind} />
+                      ) : m.media_kind === "emoji" ? (
+                        <p className="text-3xl leading-tight">{m.content}</p>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      )}
                       <p
                         className={cn(
                           "mt-1 text-[10px]",
