@@ -140,6 +140,72 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_reward_limits: {
+        Row: {
+          completed_ads: number
+          day: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_ads?: number
+          day?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_ads?: number
+          day?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feature_unlocks: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          feature: string
+          id: string
+          plan_hours: number
+          progress_ads: number
+          required_ads: number
+          source: string
+          status: string
+          unlocked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          feature: string
+          id?: string
+          plan_hours?: number
+          progress_ads?: number
+          required_ads?: number
+          source?: string
+          status?: string
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          feature?: string
+          id?: string
+          plan_hours?: number
+          progress_ads?: number
+          required_ads?: number
+          source?: string
+          status?: string
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       internal_notes: {
         Row: {
           author_id: string | null
@@ -207,6 +273,9 @@ export type Database = {
           id: string
           is_read: boolean
           is_system: boolean
+          media_kind: string
+          media_mime: string | null
+          media_path: string | null
           moderation_status: Database["public"]["Enums"]["moderation_status"]
           sender_id: string | null
         }
@@ -217,6 +286,9 @@ export type Database = {
           id?: string
           is_read?: boolean
           is_system?: boolean
+          media_kind?: string
+          media_mime?: string | null
+          media_path?: string | null
           moderation_status?: Database["public"]["Enums"]["moderation_status"]
           sender_id?: string | null
         }
@@ -227,6 +299,9 @@ export type Database = {
           id?: string
           is_read?: boolean
           is_system?: boolean
+          media_kind?: string
+          media_mime?: string | null
+          media_path?: string | null
           moderation_status?: Database["public"]["Enums"]["moderation_status"]
           sender_id?: string | null
         }
@@ -401,6 +476,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rewarded_ad_events: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          feature: string
+          id: string
+          plan_ads: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          feature: string
+          id?: string
+          plan_ads: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          feature?: string
+          id?: string
+          plan_ads?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           completed_at: string | null
@@ -464,7 +569,11 @@ export type Database = {
         Args: { _conversation_id: string }
         Returns: boolean
       }
+      cancel_rewarded_ad: { Args: { _session_id: string }; Returns: undefined }
+      complete_rewarded_ad: { Args: { _session_id: string }; Returns: Json }
       create_conversation: { Args: { _topic?: string }; Returns: string }
+      daily_ads_used: { Args: { _uid: string }; Returns: number }
+      get_media_access: { Args: never; Returns: Json }
       guard_bypassed: { Args: never; Returns: boolean }
       has_role: {
         Args: {
@@ -474,6 +583,10 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _uid: string }; Returns: boolean }
+      media_allowed: {
+        Args: { _feature: string; _uid: string }
+        Returns: boolean
+      }
       purge_expired_safety_records: { Args: never; Returns: number }
       purge_user_data: { Args: { _user_id: string }; Returns: undefined }
       record_deletion_failure: {
@@ -483,6 +596,10 @@ export type Database = {
       request_account_deletion: {
         Args: { _reason?: string }
         Returns: undefined
+      }
+      start_rewarded_ad: {
+        Args: { _feature: string; _plan_ads: number }
+        Returns: string
       }
     }
     Enums: {
