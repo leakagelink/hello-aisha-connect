@@ -11,3 +11,7 @@
 - [x] Add native Android FCM registration, verified token storage, and automatic Firebase config sync
 - [x] Use helloaisha.online as the canonical domain (canonical + og:url tags, sign-in return address, robots sitemap)
 - [x] helloaisha.online DNS submitted, now verifying
+
+## Build & verify rewarded ads on device (Android)
+- Status: open, blocked on user building the APK and running Android Studio's AI agent.
+- Commands documented for user; verification prompt drafted.
