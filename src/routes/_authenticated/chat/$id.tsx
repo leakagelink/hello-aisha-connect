@@ -428,7 +428,30 @@ function ChatPage() {
       </div>
 
       <div className="sticky bottom-0 border-t border-border bg-card/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-md items-end gap-2">
+        <div className="mx-auto flex w-full max-w-md items-end gap-1">
+          <EmojiPicker onSelect={(emoji) => void sendEmoji(emoji)} disabled={!!closed || sending} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={canUse("image") ? "Send a photo" : "Photo sharing is locked"}
+            disabled={!!closed || sending}
+            className="size-11 shrink-0 rounded-full text-muted-foreground"
+            onClick={() => pickMedia("image")}
+          >
+            <ImageIcon className="size-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={canUse("video") ? "Send a video" : "Video sharing is locked"}
+            disabled={!!closed || sending}
+            className="size-11 shrink-0 rounded-full text-muted-foreground"
+            onClick={() => pickMedia("video")}
+          >
+            <Video className="size-5" />
+          </Button>
           <Textarea
             value={draft}
             onChange={(e) => onDraftChange(e.target.value.slice(0, 4000))}
@@ -455,12 +478,53 @@ function ChatPage() {
             <Send className="size-5" />
           </Button>
         </div>
-        <p className="mx-auto mt-2 max-w-md text-center text-[10px] text-muted-foreground">
-          Text only. Peer support, not therapy or emergency help.
+
+        <input
+          ref={imageInput}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            void sendMedia("image", e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+        <input
+          ref={videoInput}
+          type="file"
+          accept="video/*"
+          hidden
+          onChange={(e) => {
+            void sendMedia("video", e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+
+        {access && !access.is_admin ? (
+          <p className="mx-auto mt-2 max-w-md text-center text-[10px] text-muted-foreground">
+            {(["emoji", "image", "video"] as MediaFeature[])
+              .map((feature) =>
+                access.features[feature].unlocked
+                  ? `${feature === "emoji" ? "Emoji" : feature === "image" ? "Photos" : "Videos"}: ${timeLeftLabel(access.features[feature].expires_at)}`
+                  : `${feature === "emoji" ? "Emoji" : feature === "image" ? "Photos" : "Videos"}: locked`,
+              )
+              .join(" · ")}
+          </p>
+        ) : null}
+
+        <p className="mx-auto mt-1 max-w-md text-center text-[10px] text-muted-foreground">
+          Peer support, not therapy or emergency help.
         </p>
       </div>
 
       <ReportDialog open={reportOpen} onOpenChange={setReportOpen} conversationId={id} />
+      <MediaUnlockDialog
+        open={unlockFeature !== null}
+        onOpenChange={(open) => setUnlockFeature(open ? unlockFeature : null)}
+        access={access}
+        feature={unlockFeature ?? "emoji"}
+      />
     </main>
   );
 }
+
