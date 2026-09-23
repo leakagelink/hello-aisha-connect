@@ -45,5 +45,9 @@
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_color" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="hello_aisha_channel" />
 
+        <!-- Google AdMob application id (rewarded ads only) -->
+        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-1475323931624357~9564264248" />
+
     </application>
+
 </manifest>
